@@ -22,20 +22,10 @@ jobs:
           8.0.x
 
     - name: Restore dependencies
-      run: |
-        dotnet restore src/Authorizer.DotNet/Authorizer.DotNet.csproj
-        dotnet restore tests/Authorizer.DotNet.Tests/Authorizer.DotNet.Tests.csproj
-        dotnet restore samples/Authorizer.Sample.AspNetCore/Authorizer.Sample.AspNetCore.csproj
-        dotnet restore samples/Authorizer.Sample.BlazorServer/Authorizer.Sample.BlazorServer.csproj
-        dotnet restore samples/Authorizer.Sample.Console/Authorizer.Sample.Console.csproj
+      run: dotnet restore Authorizer.DotNet.sln
 
     - name: Build
-      run: |
-        dotnet build src/Authorizer.DotNet/Authorizer.DotNet.csproj --no-restore --configuration Release
-        dotnet build tests/Authorizer.DotNet.Tests/Authorizer.DotNet.Tests.csproj --no-restore --configuration Release
-        dotnet build samples/Authorizer.Sample.AspNetCore/Authorizer.Sample.AspNetCore.csproj --no-restore --configuration Release
-        dotnet build samples/Authorizer.Sample.BlazorServer/Authorizer.Sample.BlazorServer.csproj --no-restore --configuration Release
-        dotnet build samples/Authorizer.Sample.Console/Authorizer.Sample.Console.csproj --no-restore --configuration Release
+      run: dotnet build Authorizer.DotNet.sln --no-restore --configuration Release
 
     - name: Test
-      run: dotnet test tests/Authorizer.DotNet.Tests/Authorizer.DotNet.Tests.csproj --no-build --configuration Release --verbosity normal
+      run: dotnet test Authorizer.DotNet.sln --no-build --configuration Release --verbosity normal
