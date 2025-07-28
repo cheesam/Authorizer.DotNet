@@ -6,6 +6,9 @@ using Authorizer.DotNet.Models.Requests;
 
 namespace Authorizer.Sample.AspNetCore.Controllers;
 
+/// <summary>
+/// Profile controller for managing user profile and session operations.
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
@@ -14,12 +17,21 @@ public class ProfileController : ControllerBase
     private readonly IAuthorizerClient _authorizerClient;
     private readonly ILogger<ProfileController> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ProfileController"/> class.
+    /// </summary>
+    /// <param name="authorizerClient">The authorizer client.</param>
+    /// <param name="logger">The logger.</param>
     public ProfileController(IAuthorizerClient authorizerClient, ILogger<ProfileController> logger)
     {
         _authorizerClient = authorizerClient;
         _logger = logger;
     }
 
+    /// <summary>
+    /// Gets the current user's profile information.
+    /// </summary>
+    /// <returns>User profile data.</returns>
     [HttpGet]
     public async Task<IActionResult> GetProfile()
     {
@@ -47,6 +59,10 @@ public class ProfileController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Gets the current user's session information.
+    /// </summary>
+    /// <returns>Session data including tokens and expiration.</returns>
     [HttpGet("session")]
     public async Task<IActionResult> GetSession()
     {
@@ -68,6 +84,10 @@ public class ProfileController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Logs out the current user and invalidates their session.
+    /// </summary>
+    /// <returns>Success message if logout was successful.</returns>
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {
@@ -89,6 +109,11 @@ public class ProfileController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Changes the current user's password.
+    /// </summary>
+    /// <param name="request">The change password request containing old and new passwords.</param>
+    /// <returns>Success message if password was changed.</returns>
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
     {
@@ -117,6 +142,10 @@ public class ProfileController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Validates the current user's JWT token.
+    /// </summary>
+    /// <returns>Validation result with user profile if valid.</returns>
     [HttpPost("validate-jwt")]
     public async Task<IActionResult> ValidateJwt()
     {

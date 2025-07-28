@@ -4,6 +4,9 @@ using Authorizer.DotNet.Models.Requests;
 
 namespace Authorizer.Sample.AspNetCore.Controllers;
 
+/// <summary>
+/// Authentication controller for handling login, signup, and related operations.
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
@@ -11,12 +14,22 @@ public class AuthController : ControllerBase
     private readonly IAuthorizerClient _authorizerClient;
     private readonly ILogger<AuthController> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuthController"/> class.
+    /// </summary>
+    /// <param name="authorizerClient">The authorizer client.</param>
+    /// <param name="logger">The logger.</param>
     public AuthController(IAuthorizerClient authorizerClient, ILogger<AuthController> logger)
     {
         _authorizerClient = authorizerClient;
         _logger = logger;
     }
 
+    /// <summary>
+    /// Authenticates a user with email and password.
+    /// </summary>
+    /// <param name="request">The login request containing user credentials.</param>
+    /// <returns>Login response with user data and tokens.</returns>
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
@@ -38,6 +51,11 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Registers a new user account.
+    /// </summary>
+    /// <param name="request">The signup request containing user information.</param>
+    /// <returns>Signup response with user data.</returns>
     [HttpPost("signup")]
     public async Task<IActionResult> Signup([FromBody] SignupRequest request)
     {
@@ -59,6 +77,11 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Initiates a password reset process by sending a reset email.
+    /// </summary>
+    /// <param name="request">The forgot password request containing the user's email.</param>
+    /// <returns>Success message if email was sent.</returns>
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
     {
@@ -80,6 +103,11 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Resets a user's password using a reset token.
+    /// </summary>
+    /// <param name="request">The reset password request containing token and new password.</param>
+    /// <returns>Success message if password was reset.</returns>
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
     {
@@ -101,6 +129,11 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Verifies a user's email address using a verification token.
+    /// </summary>
+    /// <param name="request">The verify email request containing the verification token.</param>
+    /// <returns>Success message if email was verified.</returns>
     [HttpPost("verify-email")]
     public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest request)
     {
@@ -122,6 +155,10 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Gets metadata information about the Authorizer configuration.
+    /// </summary>
+    /// <returns>Meta information including available auth methods and configuration.</returns>
     [HttpGet("meta")]
     public async Task<IActionResult> GetMeta()
     {
@@ -144,7 +181,13 @@ public class AuthController : ControllerBase
     }
 }
 
+/// <summary>
+/// Request model for forgot password operation.
+/// </summary>
 public class ForgotPasswordRequest
 {
+    /// <summary>
+    /// Gets or sets the email address for password reset.
+    /// </summary>
     public string Email { get; set; } = string.Empty;
 }
