@@ -1,0 +1,61 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{8C9C5B4F-8E1A-4F5B-9B2C-3D4E5F6A7B8C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{9D0D6C5E-9F2B-4A6C-8C3D-4E5F6A7B8C9D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{AE1E7D6F-A03C-4B7D-9D4E-5F6A7B8C9D0E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Authorizer.DotNet", "src\Authorizer.DotNet\Authorizer.DotNet.csproj", "{B1F27E8F-B14D-4C8E-AE5F-6A7B8C9D0E1F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Authorizer.DotNet.Tests", "tests\Authorizer.DotNet.Tests\Authorizer.DotNet.Tests.csproj", "{C2037F9F-C25E-4D9F-BF6F-7B8C9D0E1F20}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Authorizer.Sample.AspNetCore", "samples\Authorizer.Sample.AspNetCore\Authorizer.Sample.AspNetCore.csproj", "{D314809F-D36F-4EA0-C070-8C9D0E1F2031}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Authorizer.Sample.BlazorServer", "samples\Authorizer.Sample.BlazorServer\Authorizer.Sample.BlazorServer.csproj", "{E4259190-E480-4FB1-D181-9D0E1F203142}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Authorizer.Sample.Console", "samples\Authorizer.Sample.Console\Authorizer.Sample.Console.csproj", "{F5369291-F591-40C2-E292-0E1F20314253}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B1F27E8F-B14D-4C8E-AE5F-6A7B8C9D0E1F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1F27E8F-B14D-4C8E-AE5F-6A7B8C9D0E1F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1F27E8F-B14D-4C8E-AE5F-6A7B8C9D0E1F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1F27E8F-B14D-4C8E-AE5F-6A7B8C9D0E1F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C2037F9F-C25E-4D9F-BF6F-7B8C9D0E1F20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C2037F9F-C25E-4D9F-BF6F-7B8C9D0E1F20}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C2037F9F-C25E-4D9F-BF6F-7B8C9D0E1F20}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C2037F9F-C25E-4D9F-BF6F-7B8C9D0E1F20}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D314809F-D36F-4EA0-C070-8C9D0E1F2031}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D314809F-D36F-4EA0-C070-8C9D0E1F2031}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D314809F-D36F-4EA0-C070-8C9D0E1F2031}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D314809F-D36F-4EA0-C070-8C9D0E1F2031}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E4259190-E480-4FB1-D181-9D0E1F203142}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E4259190-E480-4FB1-D181-9D0E1F203142}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E4259190-E480-4FB1-D181-9D0E1F203142}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E4259190-E480-4FB1-D181-9D0E1F203142}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F5369291-F591-40C2-E292-0E1F20314253}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5369291-F591-40C2-E292-0E1F20314253}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5369291-F591-40C2-E292-0E1F20314253}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5369291-F591-40C2-E292-0E1F20314253}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{B1F27E8F-B14D-4C8E-AE5F-6A7B8C9D0E1F} = {8C9C5B4F-8E1A-4F5B-9B2C-3D4E5F6A7B8C}
+		{C2037F9F-C25E-4D9F-BF6F-7B8C9D0E1F20} = {9D0D6C5E-9F2B-4A6C-8C3D-4E5F6A7B8C9D}
+		{D314809F-D36F-4EA0-C070-8C9D0E1F2031} = {AE1E7D6F-A03C-4B7D-9D4E-5F6A7B8C9D0E}
+		{E4259190-E480-4FB1-D181-9D0E1F203142} = {AE1E7D6F-A03C-4B7D-9D4E-5F6A7B8C9D0E}
+		{F5369291-F591-40C2-E292-0E1F20314253} = {AE1E7D6F-A03C-4B7D-9D4E-5F6A7B8C9D0E}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A6B7C8D9-E0F1-2345-6789-ABCDEF012345}
+	EndGlobalSection
+EndGlobal
