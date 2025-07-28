@@ -13,6 +13,11 @@
     <WarningsAsErrors>$(WarningsAsErrors);CS1591</WarningsAsErrors>
   </PropertyGroup>
 
+  <!-- Disable packaging for samples and tests by default -->
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('samples')) or $(MSBuildProjectDirectory.Contains('tests'))">
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
   <!-- Source Link support for debugging -->
   <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
