@@ -10,14 +10,14 @@
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>Authorizer.DotNet</PackageId>
-    <PackageVersion>1.0.0</PackageVersion>
-    <Authors>Authorizer.dev</Authors>
+    <PackageVersion>1.0.1</PackageVersion>
+    <Authors>cheesam</Authors>
     <Company>Authorizer.dev</Company>
     <Product>Authorizer.DotNet</Product>
     <Description>Official .NET SDK for Authorizer.dev authentication service. Supports ASP.NET Core, Blazor Server/WebAssembly, and other .NET applications with comprehensive authentication features.</Description>
     <PackageTags>authorizer;authentication;oauth;jwt;dotnet;sdk</PackageTags>
-    <PackageProjectUrl>https://github.com/authorizerdev/authorizer-dotnet</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/authorizerdev/authorizer-dotnet</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/cheesam/Authorizer.DotNet</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/cheesam/Authorizer.DotNet</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
