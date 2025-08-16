@@ -46,12 +46,9 @@ static async Task RunSampleAsync(IAuthorizerClient client, ILogger logger)
     {
         logger.LogInformation("Authorizer Version: {Version}", metaResponse.Data?.Version);
         logger.LogInformation("Signup Enabled: {SignupEnabled}", metaResponse.Data?.IsSignupEnabled);
-        logger.LogInformation("Social Login Enabled: {SocialLoginEnabled}", metaResponse.Data?.IsSocialLoginEnabled);
-        
-        if (metaResponse.Data?.SocialLoginProviders?.Any() == true)
-        {
-            logger.LogInformation("Social Providers: {Providers}", string.Join(", ", metaResponse.Data.SocialLoginProviders));
-        }
+        logger.LogInformation("Google Login Enabled: {GoogleLoginEnabled}", metaResponse.Data?.IsGoogleLoginEnabled);
+        logger.LogInformation("GitHub Login Enabled: {GitHubLoginEnabled}", metaResponse.Data?.IsGithubLoginEnabled);
+        logger.LogInformation("Facebook Login Enabled: {FacebookLoginEnabled}", metaResponse.Data?.IsFacebookLoginEnabled);
     }
     else
     {

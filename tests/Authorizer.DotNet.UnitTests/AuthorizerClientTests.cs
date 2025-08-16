@@ -237,9 +237,10 @@ public class AuthorizerClientTests
         var expectedResponse = AuthorizerResponse<UserProfile>.Success(expectedProfile);
 
         _mockHttpClient
-            .Setup(x => x.PostGraphQLAsync<UserProfile>(
+            .Setup(x => x.PostGraphQLWithAuthAsync<UserProfile>(
                 It.IsAny<string>(), 
                 It.IsAny<object>(), 
+                It.IsAny<string>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResponse);
 

@@ -1,0 +1,68 @@
+# Command to add .gitconfig to your install: git config --local include.path ../.gitconfig
+
+[alias] 
+    # The following are helper functions adapted for Authorizer.DotNet workflow
+    ai = add -i
+    #############   
+    cp = cherry-pick
+    cpa = cherry-pick --abort
+    cpc = cherry-pick --continue
+    #############
+    m = merge
+    ma = merge --abort
+    mc = merge --continue
+    ms = merge --skip
+    #############
+    rb = rebase
+    rba = rebase --abort
+    rbc = rebase --continue
+    rbi = rebase --interactive
+    rbs = rebase --skip
+    #############
+    ps = push
+    psf = push -f
+    psu = push -u
+    pst = push --tags
+    # Helper functions 
+    branch-name = !git rev-parse --abbrev-ref HEAD
+    short-branch-name = !git branch-name | sed -E 's/.*\\///g'
+    publish = !git push -u origin $(git branch-name)
+    new-authorizer-branch = !git checkout master && git pull && git checkout -b $1/$2 && git publish && :
+    
+    # Branch management functions (master-only workflow)
+    feature-branch = !git new-authorizer-branch feature $1 # Creates a new branch from master, with the format feature/<branch-name>
+    bug-branch = !git new-authorizer-branch bug $1 # Creates a new branch from master, with the format bug/<branch-name>
+    fix-branch = !git new-authorizer-branch fix $1 # Creates a new branch from master, with the format fix/<branch-name>
+    docs-branch = !git new-authorizer-branch docs $1 # Creates a new branch from master, with the format docs/<branch-name>
+    chore-branch = !git new-authorizer-branch chore $1 # Creates a new branch from master, with the format chore/<branch-name>
+    refactor-branch = !git new-authorizer-branch refactor $1 # Creates a new branch from master, with the format refactor/<branch-name>
+    test-branch = !git new-authorizer-branch test $1 # Creates a new branch from master, with the format test/<branch-name>
+    
+    # Rebase helpers
+    mrb = "!f() { branchname=$(git branch-name); git checkout master; git pull; git checkout ${branchname}; git pull; git rebase origin/master; }; f" # master rebase with pulls -> git mrb
+    master-rebase = !git mrb
+
+    # Branch switching helpers
+    switch-feature-branch = !git checkout feature/$(git short-branch-name)
+    switch-bug-branch = !git checkout bug/$(git short-branch-name)
+    switch-fix-branch = !git checkout fix/$(git short-branch-name)
+    switch-docs-branch = !git checkout docs/$(git short-branch-name)
+    switch-chore-branch = !git checkout chore/$(git short-branch-name)
+
+    ## Compact log
+    cl = !git --no-pager log --oneline -n 10
+    ## Pretty log
+    pl = !git log --pretty=format:'%h' -n 1
+
+    ## Opens GitHub on the correct page to request a PR
+    pull-request = !git psf && open https://github.com/cheesam/Authorizer.DotNet/compare/master...$(git branch-name)
+    pr = !git pull-request
+    
+    # Misc functions
+    add-commit = !git add -A && git commit # Adds all files and commits with a message -> git add-commit -m "My commit message"
+    
+    # Release helpers
+    tag-version = !git tag -a v$1 -m "Release version $1" && git push origin v$1 && :
+    
+    # Clean up merged branches (excluding master)
+    cleanup = !git branch --merged master | grep -v master | xargs -n 1 git branch -d
