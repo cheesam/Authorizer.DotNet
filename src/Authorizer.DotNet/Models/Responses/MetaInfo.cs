@@ -24,7 +24,7 @@ public class MetaInfo
     /// <summary>
     /// Whether signup is enabled.
     /// </summary>
-    [JsonPropertyName("is_signup_enabled")]
+    [JsonPropertyName("is_sign_up_enabled")]
     public bool IsSignupEnabled { get; set; }
 
     /// <summary>
@@ -46,22 +46,40 @@ public class MetaInfo
     public bool IsMagicLinkLoginEnabled { get; set; }
 
     /// <summary>
-    /// Whether mobile OTP is enabled.
+    /// Whether Google login is enabled.
     /// </summary>
-    [JsonPropertyName("is_mobile_otp_enabled")]
-    public bool IsMobileOtpEnabled { get; set; }
+    [JsonPropertyName("is_google_login_enabled")]
+    public bool IsGoogleLoginEnabled { get; set; }
 
     /// <summary>
-    /// Whether social login is enabled.
+    /// Whether GitHub login is enabled.
     /// </summary>
-    [JsonPropertyName("is_social_login_enabled")]
-    public bool IsSocialLoginEnabled { get; set; }
+    [JsonPropertyName("is_github_login_enabled")]
+    public bool IsGithubLoginEnabled { get; set; }
 
     /// <summary>
-    /// List of enabled social login providers.
+    /// Whether Facebook login is enabled.
     /// </summary>
-    [JsonPropertyName("social_login_providers")]
-    public List<string>? SocialLoginProviders { get; set; }
+    [JsonPropertyName("is_facebook_login_enabled")]
+    public bool IsFacebookLoginEnabled { get; set; }
+
+    /// <summary>
+    /// Whether Apple login is enabled.
+    /// </summary>
+    [JsonPropertyName("is_apple_login_enabled")]
+    public bool IsAppleLoginEnabled { get; set; }
+
+    /// <summary>
+    /// Whether Discord login is enabled.
+    /// </summary>
+    [JsonPropertyName("is_discord_login_enabled")]
+    public bool IsDiscordLoginEnabled { get; set; }
+
+    /// <summary>
+    /// Whether Roblox login is enabled.
+    /// </summary>
+    [JsonPropertyName("is_roblox_login_enabled")]
+    public bool IsRobloxLoginEnabled { get; set; }
 
     /// <summary>
     /// Whether strong password policy is enforced.
@@ -69,41 +87,6 @@ public class MetaInfo
     [JsonPropertyName("is_strong_password_enabled")]
     public bool IsStrongPasswordEnabled { get; set; }
 
-    /// <summary>
-    /// Configuration for authentication recipes.
-    /// </summary>
-    [JsonPropertyName("auth_recipe_config")]
-    public AuthRecipeConfig? AuthRecipeConfig { get; set; }
-
-    /// <summary>
-    /// List of available roles.
-    /// </summary>
-    [JsonPropertyName("roles")]
-    public List<string>? Roles { get; set; }
-
-    /// <summary>
-    /// Default roles assigned to new users.
-    /// </summary>
-    [JsonPropertyName("default_roles")]
-    public List<string>? DefaultRoles { get; set; }
-
-    /// <summary>
-    /// Protected routes that require authentication.
-    /// </summary>
-    [JsonPropertyName("protected_routes")]
-    public List<string>? ProtectedRoutes { get; set; }
-
-    /// <summary>
-    /// Unprotected routes that don't require authentication.
-    /// </summary>
-    [JsonPropertyName("unprotected_routes")]
-    public List<string>? UnprotectedRoutes { get; set; }
-
-    /// <summary>
-    /// Optional logout URL.
-    /// </summary>
-    [JsonPropertyName("logout_url")]
-    public string? LogoutUrl { get; set; }
 
     /// <summary>
     /// Whether multi-factor authentication is enabled.

@@ -51,24 +51,18 @@ public class AuthorizerClient : IAuthorizerClient
         _logger.LogDebug("Attempting to login user with email: {Email}", request.Email);
 
         const string query = @"
-            mutation login($email: String!, $password: String!, $scope: String, $state: String, $roles: [String!], $is_remember_me: Boolean) {
+            mutation login($email: String!, $password: String!, $scope: [String!], $state: String, $roles: [String!]) {
                 login(params: {
                     email: $email
                     password: $password
                     scope: $scope
                     state: $state
                     roles: $roles
-                    is_remember_me: $is_remember_me
                 }) {
                     access_token
                     refresh_token
                     id_token
-                    token_type
                     expires_in
-                    scope
-                    state
-                    created_at
-                    session_token
                     should_show_email_otp_screen
                     should_show_mobile_otp_screen
                     user {
@@ -78,11 +72,8 @@ public class AuthorizerClient : IAuthorizerClient
                         given_name
                         family_name
                         middle_name
-                        name
                         nickname
-                        preferred_username
                         picture
-                        website
                         gender
                         birthdate
                         phone_number
@@ -90,7 +81,8 @@ public class AuthorizerClient : IAuthorizerClient
                         created_at
                         updated_at
                         roles
-                        is_active
+                        is_multi_factor_auth_enabled
+                        revoked_timestamp
                         signup_methods
                     }
                 }
@@ -100,10 +92,9 @@ public class AuthorizerClient : IAuthorizerClient
         {
             email = request.Email,
             password = request.Password,
-            scope = request.Scope,
+            scope = string.IsNullOrEmpty(request.Scope) ? null : new[] { request.Scope },
             state = request.State,
-            roles = request.Roles,
-            is_remember_me = request.IsRememberMe
+            roles = request.Roles
         };
 
         var response = await _httpClient.PostGraphQLAsync<LoginResponse>(query, variables, cancellationToken);
@@ -132,7 +123,7 @@ public class AuthorizerClient : IAuthorizerClient
         _logger.LogDebug("Attempting to signup user with email: {Email}", request.Email);
 
         const string query = @"
-            mutation signup($email: String!, $password: String!, $confirm_password: String!, $given_name: String, $family_name: String, $middle_name: String, $nickname: String, $preferred_username: String, $phone_number: String, $picture: String, $birthdate: String, $gender: String, $scope: String, $state: String, $roles: [String!], $app_data: JSON, $redirect_uri: String) {
+            mutation signup($email: String!, $password: String!, $confirm_password: String!, $given_name: String, $family_name: String, $middle_name: String, $nickname: String, $phone_number: String, $picture: String, $birthdate: String, $gender: String, $scope: [String!], $state: String, $roles: [String!], $redirect_uri: String) {
                 signup(params: {
                     email: $email
                     password: $password
@@ -141,7 +132,6 @@ public class AuthorizerClient : IAuthorizerClient
                     family_name: $family_name
                     middle_name: $middle_name
                     nickname: $nickname
-                    preferred_username: $preferred_username
                     phone_number: $phone_number
                     picture: $picture
                     birthdate: $birthdate
@@ -149,18 +139,12 @@ public class AuthorizerClient : IAuthorizerClient
                     scope: $scope
                     state: $state
                     roles: $roles
-                    app_data: $app_data
                     redirect_uri: $redirect_uri
                 }) {
                     access_token
                     refresh_token
                     id_token
-                    token_type
                     expires_in
-                    scope
-                    state
-                    created_at
-                    session_token
                     message
                     should_show_email_otp_screen
                     user {
@@ -170,11 +154,8 @@ public class AuthorizerClient : IAuthorizerClient
                         given_name
                         family_name
                         middle_name
-                        name
                         nickname
-                        preferred_username
                         picture
-                        website
                         gender
                         birthdate
                         phone_number
@@ -182,7 +163,8 @@ public class AuthorizerClient : IAuthorizerClient
                         created_at
                         updated_at
                         roles
-                        is_active
+                        is_multi_factor_auth_enabled
+                        revoked_timestamp
                         signup_methods
                     }
                 }
@@ -197,15 +179,13 @@ public class AuthorizerClient : IAuthorizerClient
             family_name = request.FamilyName,
             middle_name = request.MiddleName,
             nickname = request.Nickname,
-            preferred_username = request.PreferredUsername,
             phone_number = request.PhoneNumber,
             picture = request.Picture,
             birthdate = request.Birthdate,
             gender = request.Gender,
-            scope = request.Scope,
+            scope = string.IsNullOrEmpty(request.Scope) ? null : new[] { request.Scope },
             state = request.State,
             roles = request.Roles,
-            app_data = request.AppData,
             redirect_uri = request.RedirectUri
         };
 
@@ -317,19 +297,16 @@ public class AuthorizerClient : IAuthorizerClient
         _logger.LogDebug("Retrieving user profile");
 
         const string query = @"
-            query profile($token: String!) {
-                profile(token: $token) {
+            query {
+                profile {
                     id
                     email
                     email_verified
                     given_name
                     family_name
                     middle_name
-                    name
                     nickname
-                    preferred_username
                     picture
-                    website
                     gender
                     birthdate
                     phone_number
@@ -337,17 +314,14 @@ public class AuthorizerClient : IAuthorizerClient
                     created_at
                     updated_at
                     roles
-                    is_active
+                    is_multi_factor_auth_enabled
+                    revoked_timestamp
                     signup_methods
-                    has_mobile_otp
-                    backup_codes
-                    authenticator_devices
+                    app_data
                 }
             }";
 
-        var variables = new { token = accessToken };
-
-        return await _httpClient.PostGraphQLAsync<UserProfile>(query, variables, cancellationToken);
+        return await _httpClient.PostGraphQLWithAuthAsync<UserProfile>(query, null, accessToken, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -358,8 +332,8 @@ public class AuthorizerClient : IAuthorizerClient
         _logger.LogDebug("Retrieving session information");
 
         const string query = @"
-            query getSession($session_token: String) {
-                getSession(session_token: $session_token) {
+            query session($session_token: String) {
+                session(session_token: $session_token) {
                     access_token
                     refresh_token
                     id_token
@@ -374,11 +348,8 @@ public class AuthorizerClient : IAuthorizerClient
                         given_name
                         family_name
                         middle_name
-                        name
                         nickname
-                        preferred_username
                         picture
-                        website
                         gender
                         birthdate
                         phone_number
@@ -386,7 +357,8 @@ public class AuthorizerClient : IAuthorizerClient
                         created_at
                         updated_at
                         roles
-                        is_active
+                        is_multi_factor_auth_enabled
+                        revoked_timestamp
                         signup_methods
                     }
                 }
@@ -405,20 +377,53 @@ public class AuthorizerClient : IAuthorizerClient
         _logger.LogDebug("Logging out user session");
 
         const string query = @"
-            mutation logout($session_token: String) {
-                logout(session_token: $session_token) {
+            mutation logout {
+                logout {
                     message
                 }
             }";
 
-        var variables = new { session_token = sessionToken };
-
-        var response = await _httpClient.PostGraphQLAsync<Dictionary<string, string>>(query, variables, cancellationToken);
+        var response = await _httpClient.PostGraphQLAsync<Dictionary<string, string>>(query, null, cancellationToken);
         
         if (response.IsSuccess)
         {
             return AuthorizerResponse<bool>.Success(true);
         }
+
+        return AuthorizerResponse<bool>.Failure(response.Errors ?? Array.Empty<AuthorizerError>());
+    }
+
+    /// <inheritdoc />
+    public async Task<AuthorizerResponse<bool>> DeleteUserAsync(
+        DeleteUserRequest request, 
+        CancellationToken cancellationToken = default)
+    {
+        if (request == null) 
+            throw new ArgumentNullException(nameof(request));
+
+        _logger.LogDebug("Deleting user with email: {Email}", request.Email);
+
+        const string query = @"
+            mutation _delete_user($email: String!) {
+                _delete_user(params: {
+                    email: $email
+                }) {
+                    message
+                }
+            }";
+
+        var variables = new { email = request.Email };
+
+        var response = await _httpClient.PostGraphQLAsync<Dictionary<string, string>>(query, variables, cancellationToken);
+        
+        if (response.IsSuccess)
+        {
+            _logger.LogInformation("User deletion successful for email: {Email}", request.Email);
+            return AuthorizerResponse<bool>.Success(true);
+        }
+
+        _logger.LogWarning("User deletion failed for email: {Email}. Errors: {Errors}", 
+            request.Email, string.Join(", ", response.Errors?.Select(e => e.Message) ?? Array.Empty<string>()));
 
         return AuthorizerResponse<bool>.Failure(response.Errors ?? Array.Empty<AuthorizerError>());
     }
@@ -519,8 +524,8 @@ public class AuthorizerClient : IAuthorizerClient
         _logger.LogDebug("Initiating forgot password for email: {Email}", email);
 
         const string query = @"
-            mutation forgotPassword($email: String!) {
-                forgotPassword(params: {
+            mutation forgot_password($email: String!) {
+                forgot_password(params: {
                     email: $email
                 }) {
                     message
@@ -631,20 +636,18 @@ public class AuthorizerClient : IAuthorizerClient
                 meta {
                     version
                     client_id
-                    is_signup_enabled
+                    is_sign_up_enabled
                     is_email_verification_enabled
                     is_basic_authentication_enabled
                     is_magic_link_login_enabled
-                    is_mobile_otp_enabled
-                    is_social_login_enabled
-                    social_login_providers
                     is_strong_password_enabled
-                    roles
-                    default_roles
-                    protected_routes
-                    unprotected_routes
-                    logout_url
                     is_multi_factor_auth_enabled
+                    is_google_login_enabled
+                    is_github_login_enabled
+                    is_facebook_login_enabled
+                    is_apple_login_enabled
+                    is_discord_login_enabled
+                    is_roblox_login_enabled
                 }
             }";
 

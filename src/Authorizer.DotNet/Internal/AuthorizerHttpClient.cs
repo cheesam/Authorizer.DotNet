@@ -123,13 +123,52 @@ public class AuthorizerHttpClient
         return await SendAsync<T>(HttpMethod.Post, "graphql", graphqlRequest, cancellationToken);
     }
 
+    /// <summary>
+    /// Sends a GraphQL query request to the Authorizer GraphQL endpoint with authorization.
+    /// </summary>
+    /// <typeparam name="T">The type of the expected response data.</typeparam>
+    /// <param name="query">The GraphQL query string.</param>
+    /// <param name="variables">Variables for the GraphQL query.</param>
+    /// <param name="accessToken">Access token for authorization.</param>
+    /// <param name="cancellationToken">Cancellation token for the operation.</param>
+    /// <returns>An AuthorizerResponse containing the result of the GraphQL operation.</returns>
+    public virtual async Task<AuthorizerResponse<T>> PostGraphQLWithAuthAsync<T>(
+        string query, 
+        object? variables, 
+        string accessToken,
+        CancellationToken cancellationToken = default)
+    {
+        var graphqlRequest = new
+        {
+            query,
+            variables
+        };
+
+        return await SendAsync<T>(HttpMethod.Post, "graphql", graphqlRequest, accessToken, cancellationToken);
+    }
+
     private async Task<AuthorizerResponse<T>> SendAsync<T>(
         HttpMethod method, 
         string endpoint, 
         object? request = null, 
         CancellationToken cancellationToken = default)
     {
+        return await SendAsync<T>(method, endpoint, request, null, cancellationToken);
+    }
+
+    private async Task<AuthorizerResponse<T>> SendAsync<T>(
+        HttpMethod method, 
+        string endpoint, 
+        object? request = null, 
+        string? accessToken = null,
+        CancellationToken cancellationToken = default)
+    {
         using var httpRequest = new HttpRequestMessage(method, endpoint);
+
+        if (!string.IsNullOrEmpty(accessToken))
+        {
+            httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        }
 
         if (request != null)
         {

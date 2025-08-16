@@ -125,8 +125,14 @@ public class User
     /// <summary>
     /// Whether the user account is active.
     /// </summary>
-    [JsonPropertyName("is_active")]
-    public bool IsActive { get; set; }
+    [JsonPropertyName("is_multi_factor_auth_enabled")]
+    public bool IsMultiFactorAuthEnabled { get; set; }
+
+    /// <summary>
+    /// Timestamp when user access was revoked.
+    /// </summary>
+    [JsonPropertyName("revoked_timestamp")]
+    public long? RevokedTimestamp { get; set; }
 
     /// <summary>
     /// Reason for signup (if provided during registration).

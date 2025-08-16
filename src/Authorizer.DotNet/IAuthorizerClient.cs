@@ -72,6 +72,14 @@ public interface IAuthorizerClient
     /// <returns>Success status of the logout operation.</returns>
     Task<AuthorizerResponse<bool>> LogoutAsync(string? sessionToken = null, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Deletes a user account. This operation is irreversible.
+    /// </summary>
+    /// <param name="request">The delete user request containing the email address.</param>
+    /// <param name="cancellationToken">Cancellation token for the operation.</param>
+    /// <returns>Success status of the user deletion.</returns>
+    Task<AuthorizerResponse<bool>> DeleteUserAsync(DeleteUserRequest request, CancellationToken cancellationToken = default);
+
     #endregion
 
     #region Verification and Validation

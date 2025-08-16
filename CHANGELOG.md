@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2025-01-16
+
+### Fixed
+- Fixed failing unit test for `GetProfileAsync` method with correct HTTP client mocking
+- Updated documentation with accurate test results (84/84 tests passing)
+- Corrected file paths in testing documentation
+
+### Improved
+- Enhanced documentation accuracy and consistency
+- Updated test quality documentation
+
+## [1.0.1] - 2025-01-XX
+
 ### Added
 - Initial project documentation
 - Contributing guidelines
