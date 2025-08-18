@@ -55,4 +55,27 @@ public class AuthorizerOptions
     /// Whether to disable browser history for OAuth flows. Default is false.
     /// </summary>
     public bool DisableBrowserHistory { get; set; } = false;
+
+    /// <summary>
+    /// Whether to enable cookies for HTTP requests. Default is true.
+    /// Required for cross-domain authentication scenarios.
+    /// </summary>
+    public bool UseCookies { get; set; } = true;
+
+    /// <summary>
+    /// Whether to enable credentials (cookies, authorization headers) for CORS requests. Default is true.
+    /// Required for cross-domain authentication scenarios.
+    /// </summary>
+    public bool UseCredentials { get; set; } = true;
+
+    /// <summary>
+    /// Whether to automatically set Origin header for cross-domain requests. Default is true.
+    /// </summary>
+    public bool SetOriginHeader { get; set; } = true;
+
+    /// <summary>
+    /// Whether to enable token-based fallback when cookie-based authentication fails. Default is true.
+    /// Useful for cross-domain scenarios where cookies may not work.
+    /// </summary>
+    public bool EnableTokenFallback { get; set; } = true;
 }

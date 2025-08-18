@@ -33,6 +33,13 @@ services.AddAuthorizer(configuration, "Authorizer");
 | `ApiKey` | `string` | No | API key for server-to-server authentication |
 | `HttpTimeout` | `TimeSpan` | No | HTTP request timeout (default: 30 seconds) |
 | `ExtraHeaders` | `Dictionary<string, string>` | No | Additional headers for all requests |
+| `UseSecureCookies` | `bool` | No | Use secure cookies (default: true) |
+| `CookieDomain` | `string` | No | Domain for cross-domain cookie sharing (e.g., ".example.com") |
+| `DisableBrowserHistory` | `bool` | No | Disable browser history for OAuth flows (default: false) |
+| `UseCookies` | `bool` | No | Enable cookie handling in HTTP requests (default: true) |
+| `UseCredentials` | `bool` | No | Include credentials in CORS requests (default: true) |
+| `SetOriginHeader` | `bool` | No | Automatically set Origin header (default: true) |
+| `EnableTokenFallback` | `bool` | No | Enable token-based fallback when cookies fail (default: true) |
 
 ### Configuration Sources
 
@@ -46,6 +53,13 @@ services.AddAuthorizer(configuration, "Authorizer");
     "RedirectUrl": "https://your-app.com/auth/callback",
     "ApiKey": "your-api-key",
     "HttpTimeout": "00:01:00",
+    "UseSecureCookies": true,
+    "CookieDomain": ".your-domain.com",
+    "DisableBrowserHistory": false,
+    "UseCookies": true,
+    "UseCredentials": true,
+    "SetOriginHeader": true,
+    "EnableTokenFallback": true,
     "ExtraHeaders": {
       "X-Custom-Header": "value"
     }
@@ -77,6 +91,31 @@ services.Configure<AuthorizerOptions>(options =>
 ```
 
 ## Advanced Configuration
+
+### Cross-Domain Authentication
+
+For scenarios where your Authorizer instance and application are on different subdomains (e.g., `auth.example.com` and `app.example.com`):
+
+```csharp
+services.AddAuthorizer(options =>
+{
+    options.AuthorizerUrl = "https://auth.example.com";
+    options.RedirectUrl = "https://app.example.com/auth/callback";
+    options.ClientId = "your-client-id";
+    
+    // Cross-domain configuration
+    options.UseCookies = true;                    // Enable cookie handling
+    options.UseCredentials = true;                // Include credentials in CORS
+    options.SetOriginHeader = true;               // Auto-set Origin header
+    options.CookieDomain = ".example.com";        // Cross-domain cookie sharing
+    options.EnableTokenFallback = true;           // Token fallback (default: true)
+});
+```
+
+**Key Points:**
+- `CookieDomain` should start with a dot (e.g., `.example.com`) for subdomain support
+- Token fallback automatically handles cases where cookies fail across domains
+- CORS must be properly configured on your Authorizer instance
 
 ### Custom HTTP Client
 
@@ -186,6 +225,22 @@ The SDK performs automatic validation:
    ```
    Error: "401 Unauthorized" 
    Solution: Verify ClientId and API key are correct
+   ```
+
+5. **Cross-Domain Session Issues**
+   ```
+   Error: "422 Unprocessable Entity" 
+   Solution: Configure cross-domain options:
+   - Set CookieDomain to ".yourdomain.com"
+   - Enable UseCredentials and UseCookies
+   - Verify CORS configuration on Authorizer instance
+   ```
+
+6. **Token Fallback Not Working**
+   ```
+   Error: Session validation continues to fail
+   Solution: Check that EnableTokenFallback is true (default)
+   and tokens are being stored during login
    ```
 
 ### Debug Configuration

@@ -61,6 +61,10 @@ public static class ServiceCollectionExtensions
             opts.UseSecureCookies = options.UseSecureCookies;
             opts.CookieDomain = options.CookieDomain;
             opts.DisableBrowserHistory = options.DisableBrowserHistory;
+            opts.UseCookies = options.UseCookies;
+            opts.UseCredentials = options.UseCredentials;
+            opts.SetOriginHeader = options.SetOriginHeader;
+            opts.EnableTokenFallback = options.EnableTokenFallback;
         });
 
         return AddAuthorizerCore(services);
@@ -145,12 +149,44 @@ public static class ServiceCollectionExtensions
     {
         var httpClientBuilder = services.AddHttpClient<AuthorizerHttpClient>("Authorizer.DotNet");
 
+        // Configure HttpClient with cookie and CORS support for cross-domain scenarios
+        httpClientBuilder.ConfigurePrimaryHttpMessageHandler(serviceProvider =>
+        {
+            var options = serviceProvider.GetRequiredService<IOptions<AuthorizerOptions>>().Value;
+            var handler = new HttpClientHandler();
+            
+            if (options.UseCookies)
+            {
+                handler.UseCookies = true;
+                handler.CookieContainer = new System.Net.CookieContainer();
+                
+                // Enable cross-domain cookie sharing if CookieDomain is specified
+                if (!string.IsNullOrEmpty(options.CookieDomain))
+                {
+                    // Configure cookie container to accept cookies for the specified domain and its subdomains
+                    // The domain should start with a dot for subdomain support (e.g., ".example.com")
+                    var cookieDomain = options.CookieDomain.StartsWith(".") ? options.CookieDomain : $".{options.CookieDomain}";
+                    
+                    // Set cookie container properties for cross-domain support
+                    handler.CookieContainer.PerDomainCapacity = 50;
+                    handler.CookieContainer.MaxCookieSize = 4096;
+                }
+            }
+            else
+            {
+                handler.UseCookies = false;
+            }
+
+            return handler;
+        });
+
         if (configureHttpClient != null)
         {
             httpClientBuilder.ConfigureHttpClient(configureHttpClient);
         }
 
         services.AddScoped<IAuthorizerClient, AuthorizerClient>();
+        services.TryAddSingleton<ITokenStorage, InMemoryTokenStorage>();
 
         services.AddOptions<AuthorizerOptions>()
             .PostConfigure<IServiceProvider>((options, serviceProvider) =>
@@ -166,9 +202,42 @@ public static class ServiceCollectionExtensions
         Action<IServiceProvider, HttpClient> configureHttpClient)
     {
         var httpClientBuilder = services.AddHttpClient<AuthorizerHttpClient>("Authorizer.DotNet");
+        
+        // Configure HttpClient with cookie and CORS support for cross-domain scenarios
+        httpClientBuilder.ConfigurePrimaryHttpMessageHandler(serviceProvider =>
+        {
+            var options = serviceProvider.GetRequiredService<IOptions<AuthorizerOptions>>().Value;
+            var handler = new HttpClientHandler();
+            
+            if (options.UseCookies)
+            {
+                handler.UseCookies = true;
+                handler.CookieContainer = new System.Net.CookieContainer();
+                
+                // Enable cross-domain cookie sharing if CookieDomain is specified
+                if (!string.IsNullOrEmpty(options.CookieDomain))
+                {
+                    // Configure cookie container to accept cookies for the specified domain and its subdomains
+                    // The domain should start with a dot for subdomain support (e.g., ".example.com")
+                    var cookieDomain = options.CookieDomain.StartsWith(".") ? options.CookieDomain : $".{options.CookieDomain}";
+                    
+                    // Set cookie container properties for cross-domain support
+                    handler.CookieContainer.PerDomainCapacity = 50;
+                    handler.CookieContainer.MaxCookieSize = 4096;
+                }
+            }
+            else
+            {
+                handler.UseCookies = false;
+            }
+
+            return handler;
+        });
+        
         httpClientBuilder.ConfigureHttpClient(configureHttpClient);
 
         services.AddScoped<IAuthorizerClient, AuthorizerClient>();
+        services.TryAddSingleton<ITokenStorage, InMemoryTokenStorage>();
 
         services.AddOptions<AuthorizerOptions>()
             .PostConfigure<IServiceProvider>((options, serviceProvider) =>

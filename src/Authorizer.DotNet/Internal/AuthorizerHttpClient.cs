@@ -65,6 +65,31 @@ public class AuthorizerHttpClient
             _httpClient.DefaultRequestHeaders.Add("X-Authorizer-API-Key", _options.ApiKey);
         }
 
+        // Add CORS headers for cross-domain support
+        if (_options.UseCredentials)
+        {
+            _httpClient.DefaultRequestHeaders.Add("Access-Control-Allow-Credentials", "true");
+        }
+
+        // Set Origin header if enabled and RedirectUrl is available
+        if (_options.SetOriginHeader && !string.IsNullOrEmpty(_options.RedirectUrl))
+        {
+            try
+            {
+                var redirectUri = new Uri(_options.RedirectUrl);
+                var origin = $"{redirectUri.Scheme}://{redirectUri.Host}";
+                if (!redirectUri.IsDefaultPort)
+                {
+                    origin += $":{redirectUri.Port}";
+                }
+                _httpClient.DefaultRequestHeaders.Add("Origin", origin);
+            }
+            catch (UriFormatException ex)
+            {
+                _logger.LogWarning(ex, "Could not parse RedirectUrl to set Origin header: {RedirectUrl}", _options.RedirectUrl);
+            }
+        }
+
         foreach (var header in _options.ExtraHeaders)
         {
             _httpClient.DefaultRequestHeaders.Add(header.Key, header.Value);
@@ -269,7 +294,7 @@ public class AuthorizerHttpClient
         {
             var error = new AuthorizerError
             {
-                Message = $"HTTP {(int)response.StatusCode} {response.StatusCode}",
+                Message = GetStatusCodeErrorMessage(response.StatusCode),
                 Code = response.StatusCode.ToString()
             };
             return Task.FromResult(AuthorizerResponse<T>.Failure(error));
@@ -281,6 +306,19 @@ public class AuthorizerHttpClient
             
             if (errorResponse?.Errors != null && errorResponse.Errors.Any())
             {
+                // Enhance 422 error messages for better debugging
+                if (response.StatusCode == HttpStatusCode.UnprocessableEntity)
+                {
+                    foreach (var error in errorResponse.Errors)
+                    {
+                        if (string.IsNullOrEmpty(error.Message) || error.Message.Contains("422"))
+                        {
+                            error.Message = "Session validation failed. This may be due to cross-domain cookie issues. " +
+                                          "Try enabling token-based fallback or configuring proper CORS settings.";
+                        }
+                    }
+                }
+                
                 return Task.FromResult(errorResponse);
             }
             
@@ -289,7 +327,10 @@ public class AuthorizerHttpClient
             {
                 var error = new AuthorizerError
                 {
-                    Message = errorObj?.ToString() ?? "Unknown error",
+                    Message = response.StatusCode == HttpStatusCode.UnprocessableEntity 
+                        ? "Session validation failed. This may be due to cross-domain cookie issues. " +
+                          "Try enabling token-based fallback or configuring proper CORS settings."
+                        : errorObj?.ToString() ?? "Unknown error",
                     Code = response.StatusCode.ToString()
                 };
                 return Task.FromResult(AuthorizerResponse<T>.Failure(error));
@@ -300,8 +341,29 @@ public class AuthorizerHttpClient
         }
 
         return Task.FromResult(AuthorizerResponse<T>.Failure(
-            $"HTTP {(int)response.StatusCode} {response.StatusCode}: {responseContent}", 
+            GetStatusCodeErrorMessage(response.StatusCode, responseContent), 
             response.StatusCode.ToString()));
+    }
+
+    private static string GetStatusCodeErrorMessage(HttpStatusCode statusCode, string? responseContent = null)
+    {
+        return statusCode switch
+        {
+            HttpStatusCode.UnprocessableEntity => 
+                "Session validation failed (422). This commonly occurs in cross-domain scenarios where cookies are not accessible. " +
+                "Consider enabling token-based fallback or configuring proper CORS and cookie domain settings.",
+            HttpStatusCode.Unauthorized => 
+                "Authentication failed (401). Please check your credentials or session token.",
+            HttpStatusCode.Forbidden => 
+                "Access denied (403). You don't have permission to access this resource.",
+            HttpStatusCode.BadRequest => 
+                "Bad request (400). Please check your request parameters.",
+            HttpStatusCode.InternalServerError => 
+                "Internal server error (500). Please try again later or contact support.",
+            _ => string.IsNullOrEmpty(responseContent) 
+                ? $"HTTP {(int)statusCode} {statusCode}" 
+                : $"HTTP {(int)statusCode} {statusCode}: {responseContent}"
+        };
     }
 
     /// <summary>

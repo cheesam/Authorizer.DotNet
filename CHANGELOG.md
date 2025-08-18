@@ -7,7 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.0.2] - 2025-01-16
+## [1.0.3] - 2025-08-18
+
+### Added
+- **Cross-Domain Authentication Support**
+  - Automatic cookie-based and token-based authentication fallback for cross-subdomain scenarios
+  - New configuration options: `UseCookies`, `UseCredentials`, `SetOriginHeader`, `EnableTokenFallback`
+  - Cross-domain cookie sharing with `CookieDomain` configuration (e.g., `.example.com`)
+  - Enhanced error handling for 422 responses with helpful troubleshooting messages
+  - Token storage interface (`ITokenStorage`) with in-memory implementation (`InMemoryTokenStorage`)
+  - Automatic Origin header setting for cross-domain requests
+  - Seamless fallback when `GetSessionAsync()` fails due to cross-domain cookie restrictions
+
+### Enhanced
+- **HTTP Client Configuration**
+  - Improved cookie container setup for cross-domain scenarios with proper subdomain support
+  - CORS credentials support with `Access-Control-Allow-Credentials` header
+  - Enhanced error messages for common cross-domain authentication issues (422, 401, 403, etc.)
+  - Better cookie domain handling with automatic dot prefix for subdomain compatibility
+
+### Fixed
+- **Cross-Domain Session Validation**
+  - Fixed `GetSessionAsync()` failures in cross-subdomain scenarios (e.g., auth.example.com ↔ app.example.com)
+  - Resolved HTTP 422 errors when cookies are not accessible across different subdomains
+  - Improved session persistence between OAuth callback and application domain
+
+### Documentation
+- Added comprehensive cross-domain authentication guide (`docs/CROSS_DOMAIN_AUTHENTICATION.md`)
+- Updated README.md with cross-domain configuration examples and troubleshooting
+- Enhanced configuration documentation with new cross-domain options
+- Updated examples with cross-domain scenarios and session management
+- Improved troubleshooting section with cross-domain solutions and debugging tips
+
+### Compatibility
+- Maintains full backward compatibility with existing single-domain deployments
+- All new cross-domain features are enabled by default but gracefully fall back if not needed
+- No breaking changes to existing API or configuration
+
+## [1.0.2] - 2025-08-16
 
 ### Fixed
 - Fixed failing unit test for `GetProfileAsync` method with correct HTTP client mocking
@@ -18,14 +55,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced documentation accuracy and consistency
 - Updated test quality documentation
 
-## [1.0.1] - 2025-01-XX
+## [1.0.1] - 2025-07-31
 
 ### Added
 - Initial project documentation
 - Contributing guidelines
 - MIT License
 
-## [1.0.0] - 2025-01-XX
+## [1.0.0] - 2025-07-31
 
 ### Added
 - **Core Authentication Features**
@@ -137,7 +174,7 @@ Example entry:
 - New OAuth provider support for Google (#123)
 - Enhanced error messages with detailed validation (#124)
 
-### Fixed  
+### Fixed
 - Fixed timeout issue in login flow (#125)
 - Resolved memory leak in HTTP client (#126)
 ```
