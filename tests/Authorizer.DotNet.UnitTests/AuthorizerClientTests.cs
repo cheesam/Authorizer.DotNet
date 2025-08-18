@@ -20,6 +20,7 @@ public class AuthorizerClientTests
 {
     private readonly Mock<AuthorizerHttpClient> _mockHttpClient;
     private readonly Mock<ILogger<AuthorizerClient>> _mockLogger;
+    private readonly Mock<ITokenStorage> _mockTokenStorage;
     private readonly AuthorizerOptions _options;
     private readonly AuthorizerClient _client;
 
@@ -49,11 +50,12 @@ public class AuthorizerClientTests
         };
         
         _mockLogger = new Mock<ILogger<AuthorizerClient>>();
+        _mockTokenStorage = new Mock<ITokenStorage>();
 
         var optionsMock = new Mock<IOptions<AuthorizerOptions>>();
         optionsMock.Setup(o => o.Value).Returns(_options);
 
-        _client = new AuthorizerClient(_mockHttpClient.Object, optionsMock.Object, _mockLogger.Object);
+        _client = new AuthorizerClient(_mockHttpClient.Object, optionsMock.Object, _mockLogger.Object, _mockTokenStorage.Object);
     }
 
     #region Constructor Tests
@@ -68,7 +70,7 @@ public class AuthorizerClientTests
         optionsMock.Setup(o => o.Value).Returns(_options);
 
         Assert.Throws<ArgumentNullException>(() => 
-            new AuthorizerClient(null!, optionsMock.Object, _mockLogger.Object));
+            new AuthorizerClient(null!, optionsMock.Object, _mockLogger.Object, _mockTokenStorage.Object));
     }
 
     /// <summary>
@@ -78,7 +80,7 @@ public class AuthorizerClientTests
     public void Constructor_WithNullOptions_ShouldThrowArgumentNullException()
     {
         Assert.Throws<ArgumentNullException>(() => 
-            new AuthorizerClient(_mockHttpClient.Object, null!, _mockLogger.Object));
+            new AuthorizerClient(_mockHttpClient.Object, null!, _mockLogger.Object, _mockTokenStorage.Object));
     }
 
     /// <summary>
@@ -91,7 +93,20 @@ public class AuthorizerClientTests
         optionsMock.Setup(o => o.Value).Returns(_options);
 
         Assert.Throws<ArgumentNullException>(() => 
-            new AuthorizerClient(_mockHttpClient.Object, optionsMock.Object, null!));
+            new AuthorizerClient(_mockHttpClient.Object, optionsMock.Object, null!, _mockTokenStorage.Object));
+    }
+
+    /// <summary>
+    /// Tests that the AuthorizerClient constructor throws ArgumentNullException when tokenStorage is null.
+    /// </summary>
+    [Fact]
+    public void Constructor_WithNullTokenStorage_ShouldThrowArgumentNullException()
+    {
+        var optionsMock = new Mock<IOptions<AuthorizerOptions>>();
+        optionsMock.Setup(o => o.Value).Returns(_options);
+
+        Assert.Throws<ArgumentNullException>(() => 
+            new AuthorizerClient(_mockHttpClient.Object, optionsMock.Object, _mockLogger.Object, null!));
     }
 
     #endregion

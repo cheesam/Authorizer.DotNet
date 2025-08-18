@@ -22,6 +22,38 @@ app.MapControllers();
 app.Run();
 ```
 
+### Cross-Domain ASP.NET Core Application
+
+For scenarios where your Authorizer instance and application are on different subdomains:
+
+```csharp
+// Program.cs
+var builder = WebApplication.CreateBuilder(args);
+
+// Add Authorizer services with cross-domain configuration
+builder.Services.AddAuthorizer(options =>
+{
+    options.AuthorizerUrl = "https://auth.example.com";
+    options.RedirectUrl = "https://app.example.com/auth/callback";
+    options.ClientId = builder.Configuration["Authorizer:ClientId"];
+    
+    // Cross-domain authentication settings
+    options.UseCookies = true;                    // Enable cookie handling
+    options.UseCredentials = true;                // Include credentials in CORS
+    options.SetOriginHeader = true;               // Auto-set Origin header
+    options.CookieDomain = ".example.com";        // Cross-domain cookie sharing
+    options.EnableTokenFallback = true;           // Token fallback (default: true)
+});
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline
+app.UseRouting();
+app.MapControllers();
+
+app.Run();
+```
+
 ### Console Application
 
 ```csharp
@@ -212,6 +244,55 @@ public async Task<IActionResult> GetProfile()
     }
 
     return BadRequest(response.Errors?.Select(e => e.Message));
+}
+```
+
+### Cross-Domain Session Management
+
+```csharp
+[HttpGet("session")]
+public async Task<IActionResult> GetSession()
+{
+    // The SDK automatically handles cross-domain scenarios:
+    // 1. First tries cookie-based authentication
+    // 2. Falls back to token-based authentication if cookies fail (422 errors)
+    // 3. Uses stored tokens from successful login attempts
+    var response = await _authorizerClient.GetSessionAsync();
+
+    if (response.IsSuccess && response.Data != null)
+    {
+        return Ok(new
+        {
+            isValid = response.Data.IsValid,
+            user = response.Data.User,
+            expiresAt = response.Data.ExpiresAt
+        });
+    }
+
+    // Enhanced error messages for cross-domain troubleshooting
+    var errorMessages = response.Errors?.Select(e => e.Message) ?? Array.Empty<string>();
+    
+    // Check if this is a cross-domain authentication issue
+    if (errorMessages.Any(msg => msg.Contains("cross-domain") || msg.Contains("422")))
+    {
+        return BadRequest(new
+        {
+            error = "Cross-domain authentication issue",
+            message = "Session validation failed. This may be due to cross-domain cookie restrictions.",
+            suggestions = new[]
+            {
+                "Verify CORS configuration on your Authorizer instance",
+                "Check that CookieDomain is properly configured",
+                "Ensure token fallback is enabled (default)"
+            }
+        });
+    }
+
+    return BadRequest(new
+    {
+        error = "Session validation failed",
+        details = errorMessages
+    });
 }
 ```
 

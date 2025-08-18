@@ -313,7 +313,7 @@ public class AuthorizerHttpClientTests : IDisposable
 
         Assert.False(result.IsSuccess);
         Assert.Single(result.Errors!);
-        Assert.Equal("HTTP 500 InternalServerError", result.Errors![0].Message);
+        Assert.Equal("Internal server error (500). Please try again later or contact support.", result.Errors![0].Message);
         Assert.Equal("InternalServerError", result.Errors![0].Code);
     }
 

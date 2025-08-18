@@ -18,6 +18,7 @@ Official .NET SDK for [Authorizer.dev](https://authorizer.dev) - a powerful auth
 - 🔧 **Dependency Injection**: Native .NET DI container support
 - 📊 **Structured Logging**: Built-in logging with configurable levels
 - ⚡ **High Performance**: Optimized HTTP client with connection pooling
+- 🌍 **Cross-Domain Support**: Automatic fallback for cross-subdomain authentication
 - 🧪 **Production Ready**: Comprehensive error handling and resilience
 
 ## Installation
@@ -264,6 +265,32 @@ services.AddAuthorizer(
     });
 ```
 
+### Cross-Domain Authentication
+
+For scenarios where your Authorizer instance and application are on different subdomains:
+
+```csharp
+services.AddAuthorizer(options =>
+{
+    options.AuthorizerUrl = "https://auth.example.com";
+    options.RedirectUrl = "https://app.example.com/auth/callback";
+    options.ClientId = "your-client-id";
+    
+    // Cross-domain configuration
+    options.UseCookies = true;                    // Enable cookie handling
+    options.UseCredentials = true;                // Include credentials in CORS
+    options.SetOriginHeader = true;               // Auto-set Origin header
+    options.CookieDomain = ".example.com";        // Cross-domain cookie sharing
+    options.EnableTokenFallback = true;           // Token fallback (default: true)
+});
+```
+
+The SDK automatically handles cross-domain authentication by:
+1. Attempting cookie-based authentication first
+2. Falling back to token-based authentication if cookies fail (422 errors)
+3. Storing tokens in memory for seamless operation
+4. Providing enhanced error messages for troubleshooting
+
 ### Configuration from appsettings.json
 
 ```json
@@ -276,6 +303,10 @@ services.AddAuthorizer(
     "ApiKey": "your-api-key",
     "UseSecureCookies": true,
     "CookieDomain": ".your-domain.com",
+    "UseCookies": true,
+    "UseCredentials": true,
+    "SetOriginHeader": true,
+    "EnableTokenFallback": true,
     "ExtraHeaders": {
       "X-Custom-Header": "custom-value"
     }
@@ -917,13 +948,26 @@ var response = await authorizerClient.LoginAsync(new LoginRequest
    - Verify the `AuthorizerUrl` is correct
    - Check that your Authorizer instance is running
 
-4. **SSL/TLS Errors**
+4. **"HTTP 422 Unprocessable Entity" (Cross-Domain Issues)**
+   - Common in scenarios where auth server and app are on different subdomains
+   - Enable token fallback: `options.EnableTokenFallback = true` (default)
+   - Configure cross-domain cookies: `options.CookieDomain = ".yourdomain.com"`
+   - Enable CORS credentials: `options.UseCredentials = true`
+   - Check browser console for CORS errors
+
+5. **SSL/TLS Errors**
    - For development, you may need to disable SSL validation
    - In production, ensure valid SSL certificates
 
-5. **Timeout Errors**
+6. **Timeout Errors**
    - Increase `HttpTimeout` in configuration
    - Check network connectivity
+
+7. **Cross-Domain Authentication Not Working**
+   - Ensure `CookieDomain` starts with a dot (e.g., `.example.com`)
+   - Verify CORS is configured on your Authorizer instance
+   - Check that `UseCredentials`, `UseCookies`, and `SetOriginHeader` are enabled
+   - Look for "Token-based fallback succeeded" in debug logs
 
 ### Enable Debug Logging
 
@@ -947,6 +991,7 @@ For comprehensive documentation, see the [docs](docs/) directory:
 - **[API Reference](docs/api-reference.md)** - Complete API documentation  
 - **[Examples](docs/examples.md)** - Code examples and patterns
 - **[Configuration](docs/configuration.md)** - Configuration options
+- **[Cross-Domain Authentication](docs/CROSS_DOMAIN_AUTHENTICATION.md)** - Cross-domain setup guide
 - **[Testing](docs/testing.md)** - Testing guide
 - **[Integration Testing](docs/integration-testing.md)** - Integration test setup
 

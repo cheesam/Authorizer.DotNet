@@ -21,6 +21,7 @@ public class AuthorizerClient : IAuthorizerClient
     private readonly AuthorizerHttpClient _httpClient;
     private readonly AuthorizerOptions _options;
     private readonly ILogger<AuthorizerClient> _logger;
+    private readonly ITokenStorage _tokenStorage;
 
     /// <summary>
     /// Initializes a new instance of the AuthorizerClient class.
@@ -28,14 +29,17 @@ public class AuthorizerClient : IAuthorizerClient
     /// <param name="httpClient">The internal HTTP client for API communication.</param>
     /// <param name="options">Configuration options for the client.</param>
     /// <param name="logger">Logger instance for diagnostic information.</param>
+    /// <param name="tokenStorage">Token storage for fallback authentication.</param>
     public AuthorizerClient(
         AuthorizerHttpClient httpClient,
         IOptions<AuthorizerOptions> options,
-        ILogger<AuthorizerClient> logger)
+        ILogger<AuthorizerClient> logger,
+        ITokenStorage tokenStorage)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _tokenStorage = tokenStorage ?? throw new ArgumentNullException(nameof(tokenStorage));
     }
 
     #region Authentication Methods
@@ -102,6 +106,26 @@ public class AuthorizerClient : IAuthorizerClient
         if (response.IsSuccess)
         {
             _logger.LogInformation("User login successful for email: {Email}", request.Email);
+            
+            // Store tokens for fallback authentication if enabled
+            if (_options.EnableTokenFallback && response.Data != null)
+            {
+                try
+                {
+                    if (!string.IsNullOrEmpty(response.Data.AccessToken))
+                    {
+                        await _tokenStorage.SetAccessTokenAsync(response.Data.AccessToken, cancellationToken);
+                    }
+                    if (!string.IsNullOrEmpty(response.Data.RefreshToken))
+                    {
+                        await _tokenStorage.SetRefreshTokenAsync(response.Data.RefreshToken, cancellationToken);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to store tokens for fallback authentication");
+                }
+            }
         }
         else
         {
@@ -366,7 +390,66 @@ public class AuthorizerClient : IAuthorizerClient
 
         var variables = new { session_token = sessionToken };
 
-        return await _httpClient.PostGraphQLAsync<SessionInfo>(query, variables, cancellationToken);
+        // First try cookie-based session
+        var response = await _httpClient.PostGraphQLAsync<SessionInfo>(query, variables, cancellationToken);
+        
+        // If cookie-based session fails with 422 (common cross-domain issue), try token-based fallback
+        if (!response.IsSuccess && _options.EnableTokenFallback && 
+            response.Errors?.Any(e => e.Message?.Contains("422") == true || e.Message?.Contains("Unprocessable") == true) == true)
+        {
+            _logger.LogDebug("Cookie-based session failed, attempting token-based fallback");
+            
+            try
+            {
+                var accessToken = await _tokenStorage.GetAccessTokenAsync(cancellationToken);
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    // Try to get profile using stored access token as fallback
+                    var profileResponse = await GetProfileAsync(accessToken, cancellationToken);
+                    if (profileResponse.IsSuccess && profileResponse.Data != null)
+                    {
+                        _logger.LogInformation("Token-based fallback succeeded");
+                        
+                        // Create a synthetic SessionInfo from profile data
+                        var sessionInfo = new SessionInfo
+                        {
+                            AccessToken = accessToken,
+                            RefreshToken = await _tokenStorage.GetRefreshTokenAsync(cancellationToken),
+                            IsValid = true,
+                            User = new Models.Common.User
+                            {
+                                Id = profileResponse.Data.Id,
+                                Email = profileResponse.Data.Email,
+                                EmailVerified = profileResponse.Data.EmailVerified,
+                                GivenName = profileResponse.Data.GivenName,
+                                FamilyName = profileResponse.Data.FamilyName,
+                                MiddleName = profileResponse.Data.MiddleName,
+                                Nickname = profileResponse.Data.Nickname,
+                                Picture = profileResponse.Data.Picture,
+                                Gender = profileResponse.Data.Gender,
+                                Birthdate = profileResponse.Data.Birthdate,
+                                PhoneNumber = profileResponse.Data.PhoneNumber,
+                                PhoneNumberVerified = profileResponse.Data.PhoneNumberVerified,
+                                CreatedAt = profileResponse.Data.CreatedAt,
+                                UpdatedAt = profileResponse.Data.UpdatedAt,
+                                Roles = profileResponse.Data.Roles,
+                                IsMultiFactorAuthEnabled = profileResponse.Data.IsMultiFactorAuthEnabled,
+                                RevokedTimestamp = profileResponse.Data.RevokedTimestamp,
+                                SignupMethods = profileResponse.Data.SignupMethods
+                            }
+                        };
+                        
+                        return AuthorizerResponse<SessionInfo>.Success(sessionInfo);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Token-based fallback failed");
+            }
+        }
+
+        return response;
     }
 
     /// <inheritdoc />
@@ -387,6 +470,19 @@ public class AuthorizerClient : IAuthorizerClient
         
         if (response.IsSuccess)
         {
+            // Clear stored tokens on successful logout
+            if (_options.EnableTokenFallback)
+            {
+                try
+                {
+                    await _tokenStorage.ClearTokensAsync(cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to clear stored tokens during logout");
+                }
+            }
+            
             return AuthorizerResponse<bool>.Success(true);
         }
 
