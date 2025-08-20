@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.4] - 2025-08-19
 
+### Added
+- **New Explicit Authentication Methods**
+  - `ValidateSessionWithTokenAsync()` method for explicit token-based session validation
+  - Clear alternative to automatic fallback mechanisms for cross-domain scenarios
+  - Developer control over authentication flow selection
+
+### Changed
+- **Simplified Architecture** (BREAKING CHANGES)
+  - Removed opinionated automatic fallback mechanisms from `GetSessionAsync()` 
+  - Removed automatic cookie-to-token fallback behavior for transparency
+  - Removed configuration options: `EnableTokenFallback`, `SetOriginHeader`
+  - Enhanced error messages with clear, actionable guidance instead of technical GraphQL errors
+  - Focused on simplicity and developer control rather than hidden automatic behaviors
+
 ### Fixed
 - **GraphQL Schema Compatibility**
   - Updated GraphQL queries to use current Authorizer API v1.4.4+ field names
@@ -29,21 +43,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated SessionInfo model to match current GraphQL schema structure
   - Improved response model accuracy for authentication operations
 
-### Developer Experience
-- **Error Handling**
-  - Clearer error messages when authentication fails
-  - Better debugging information for GraphQL schema mismatches
-  - Enhanced integration test coverage for schema validation
+- **Developer Experience**
+  - Clear, actionable error messages replace technical GraphQL failures
+  - Explicit methods give developers full control over authentication flow
+  - Transparent error handling without hidden automatic retries
+  - Enhanced error messages for common issues (401, 422, 403) with specific guidance
+
+- **Cross-Domain Authentication**
+  - Developers can explicitly choose between cookie-based and token-based validation
+  - Clear error messages explain cross-domain restrictions and solutions
+  - `ValidateSessionWithTokenAsync()` provides explicit alternative for cross-domain scenarios
+
+### Security
+- **Credential Protection**
+  - Replaced all real credentials in sample code with safe placeholders
+  - Updated configuration examples to use `https://sample-app.authorizer.dev`
+  - Added gitignore rules to prevent accidental credential commits
+  - Secured integration test configurations
 
 ### Documentation
-- Updated API documentation to reflect current field names and structures
-- Added troubleshooting guide for GraphQL schema compatibility
-- Enhanced configuration examples for cross-domain cookie security
+- **Comprehensive Updates**
+  - Updated README.md to reflect simplified architecture and new methods
+  - Enhanced examples with explicit token validation patterns
+  - Updated migration guide with architectural simplification changes
+  - Added "Simplified v1.0.4 Features" section demonstrating new approach
+  - Updated troubleshooting guide with simplified solutions
+
+- **API Documentation**
+  - Documented new `ValidateSessionWithTokenAsync()` method
+  - Updated cross-domain authentication examples
+  - Added enhanced error message examples
+  - Updated configuration examples to remove deprecated options
 
 ### Compatibility
-- **Breaking Change**: Removed deprecated model properties (`IsValid`, `CreatedAt`, `SessionToken`)
-- Updated sample applications to use correct property references
-- Integration tests now validate against current Authorizer API schema
+- **Breaking Changes**
+  - Removed deprecated model properties (`IsValid`, `CreatedAt`, `SessionToken`)
+  - Removed configuration options (`EnableTokenFallback`, `SetOriginHeader`)
+  - `GetSessionAsync()` no longer automatically falls back to token-based authentication
+  - Updated sample applications to use correct property references and explicit patterns
+  - Integration tests now validate against current Authorizer API schema
+
+### Migration
+- **Simplified Migration Path**
+  - Added comprehensive migration guide (`docs/MIGRATION_GUIDE_v1.0.4.md`)
+  - Clear examples showing before/after patterns for both GraphQL and architectural changes
+  - Step-by-step guidance for updating from automatic to explicit authentication patterns
 
 ## [1.0.3] - 2025-08-18
 

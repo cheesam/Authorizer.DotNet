@@ -422,7 +422,7 @@ public class AuthorizerClient : IAuthorizerClient
         string accessToken,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(accessToken))
+        if (string.IsNullOrWhiteSpace(accessToken))
         {
             return AuthorizerResponse<SessionInfo>.Failure(
                 new[] { new AuthorizerError { Message = "Access token is required for token-based session validation." } });

@@ -31,7 +31,7 @@ public class AuthorizerClientTests
     {
         _options = new AuthorizerOptions
         {
-            AuthorizerUrl = "https://test.authorizer.dev",
+            AuthorizerUrl = "https://demo.authorizer.dev",
             RedirectUrl = "https://test.app/callback"
         };
 
@@ -490,6 +490,107 @@ public class AuthorizerClientTests
         Assert.Equal("1.0.0", result.Data!.Version);
         Assert.Equal("test_client_id", result.Data.ClientId);
         Assert.True(result.Data.IsSignupEnabled);
+    }
+
+    #endregion
+
+    #region ValidateSessionWithTokenAsync Tests
+
+    /// <summary>
+    /// Tests that ValidateSessionWithTokenAsync returns session info when given a valid access token.
+    /// </summary>
+    [Fact]
+    public async Task ValidateSessionWithTokenAsync_WithValidToken_ShouldReturnSessionInfo()
+    {
+        var accessToken = "valid_access_token";
+        var expectedUser = new UserProfile
+        {
+            Id = "user_id",
+            Email = "test@example.com",
+            GivenName = "Test",
+            FamilyName = "User"
+        };
+
+        var expectedResponse = AuthorizerResponse<UserProfile>.Success(expectedUser);
+
+        _mockHttpClient
+            .Setup(x => x.PostGraphQLWithAuthAsync<UserProfile>(
+                It.IsAny<string>(), 
+                It.IsAny<object>(), 
+                It.Is<string>(token => token == accessToken),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResponse);
+
+        var result = await _client.ValidateSessionWithTokenAsync(accessToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Data);
+        Assert.Equal(accessToken, result.Data!.AccessToken);
+        Assert.NotNull(result.Data.User);
+        Assert.Equal("user_id", result.Data.User!.Id);
+        Assert.Equal("test@example.com", result.Data.User.Email);
+    }
+
+    /// <summary>
+    /// Tests that ValidateSessionWithTokenAsync returns failure when access token is invalid.
+    /// </summary>
+    [Fact]
+    public async Task ValidateSessionWithTokenAsync_WithInvalidToken_ShouldReturnFailure()
+    {
+        var accessToken = "invalid_access_token";
+        var expectedResponse = AuthorizerResponse<UserProfile>.Failure(
+            new[] { new AuthorizerError { Message = "Invalid access token" } });
+
+        _mockHttpClient
+            .Setup(x => x.PostGraphQLWithAuthAsync<UserProfile>(
+                It.IsAny<string>(), 
+                It.IsAny<object>(), 
+                It.Is<string>(token => token == accessToken),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResponse);
+
+        var result = await _client.ValidateSessionWithTokenAsync(accessToken);
+
+        Assert.False(result.IsSuccess);
+        Assert.NotNull(result.Errors);
+        Assert.Contains(result.Errors, e => e.Message.Contains("Invalid access token"));
+    }
+
+    /// <summary>
+    /// Tests that ValidateSessionWithTokenAsync returns failure with appropriate error when given null or empty token.
+    /// </summary>
+    [Theory]
+    [InlineData(null!)]
+    [InlineData("")]
+    [InlineData(" ")]
+    public async Task ValidateSessionWithTokenAsync_WithInvalidToken_ShouldReturnFailureWithError(string? accessToken)
+    {
+        var result = await _client.ValidateSessionWithTokenAsync(accessToken!);
+
+        Assert.False(result.IsSuccess);
+        Assert.NotNull(result.Errors);
+        Assert.Contains(result.Errors, e => e.Message == "Access token is required for token-based session validation.");
+    }
+
+    /// <summary>
+    /// Tests that ValidateSessionWithTokenAsync handles HTTP client exceptions gracefully.
+    /// </summary>
+    [Fact]
+    public async Task ValidateSessionWithTokenAsync_WithHttpException_ShouldReturnFailure()
+    {
+        var accessToken = "valid_access_token";
+
+        _mockHttpClient
+            .Setup(x => x.PostGraphQLWithAuthAsync<UserProfile>(
+                It.IsAny<string>(), 
+                It.IsAny<object>(), 
+                It.Is<string>(token => token == accessToken),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new System.Net.Http.HttpRequestException("Network error"));
+
+        // Should not throw, but return failure response
+        await Assert.ThrowsAsync<System.Net.Http.HttpRequestException>(() => 
+            _client.ValidateSessionWithTokenAsync(accessToken));
     }
 
     #endregion

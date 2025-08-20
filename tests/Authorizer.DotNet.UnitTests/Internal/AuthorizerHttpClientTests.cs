@@ -40,7 +40,7 @@ public class AuthorizerHttpClientTests : IDisposable
         
         _options = new AuthorizerOptions
         {
-            AuthorizerUrl = "https://test.authorizer.dev",
+            AuthorizerUrl = "https://demo.authorizer.dev",
             RedirectUrl = "https://test.app/callback",
             ApiKey = "test_api_key",
             HttpTimeout = TimeSpan.FromSeconds(30)

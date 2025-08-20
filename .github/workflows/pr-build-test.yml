@@ -27,5 +27,7 @@ jobs:
     - name: Build
       run: dotnet build Authorizer.DotNet.sln --no-restore --configuration Release
 
-    - name: Test
-      run: dotnet test Authorizer.DotNet.sln --no-build --configuration Release --verbosity normal
+    - name: Test (Unit Tests Only)
+      run: dotnet test tests/Authorizer.DotNet.UnitTests/Authorizer.DotNet.UnitTests.csproj --no-build --configuration Release --verbosity normal
+      # Note: Integration tests are excluded from CI as they require external Authorizer instance
+      # To run integration tests locally: dotnet test tests/Authorizer.DotNet.IntegrationTests/

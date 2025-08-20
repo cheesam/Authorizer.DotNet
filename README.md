@@ -783,7 +783,7 @@ public class AuthorizerIntegrationTests : IClassFixture<WebApplicationFactory<Pr
             {
                 services.AddAuthorizer(options =>
                 {
-                    options.AuthorizerUrl = "https://test.authorizer.dev";
+                    options.AuthorizerUrl = "https://demo.authorizer.dev";
                     options.RedirectUrl = "https://test.app/callback";
                 });
             });
@@ -864,9 +864,9 @@ When contributing to the project:
 The SDK includes comprehensive integration tests that verify functionality against real Authorizer instances:
 
 ```bash
-# Run integration tests with your instance
-cd integration-test/
-dotnet run
+# Run integration tests (uses demo instance by default)
+cd tests/Authorizer.DotNet.IntegrationTests/
+dotnet test
 ```
 
 **Configure your instance credentials:**

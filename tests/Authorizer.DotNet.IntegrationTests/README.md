@@ -4,11 +4,11 @@ This project contains integration tests that verify the Authorizer.DotNet client
 
 ## Quick Start
 
-1. **Configure your instance**: Create `appsettings.personal.json` (gitignored):
+1. **Configure your instance**: The tests use the demo instance by default, or create `appsettings.personal.json` (gitignored) for your own instance:
    ```json
    {
      "Authorizer": {
-       "AuthorizerUrl": "https://your-authorizer-instance.com", 
+       "AuthorizerUrl": "https://demo.authorizer.dev", 
        "ClientId": "your-client-id",
        "RedirectUrl": "http://localhost:8080/auth/callback"
      }
