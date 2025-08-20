@@ -169,7 +169,7 @@ static async Task DemonstrateProfileOperations(IAuthorizerClient client, string 
     var sessionResponse = await client.GetSessionAsync();
     if (sessionResponse.IsSuccess && sessionResponse.Data != null)
     {
-        logger.LogInformation("Session is valid: {IsValid}", sessionResponse.Data.IsValid);
+        logger.LogInformation("Session has user: {HasUser}", sessionResponse.Data.User != null);
         logger.LogInformation("Session user: {UserEmail}", sessionResponse.Data.User?.Email);
     }
     else

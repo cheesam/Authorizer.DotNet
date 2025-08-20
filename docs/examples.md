@@ -253,45 +253,49 @@ public async Task<IActionResult> GetProfile()
 [HttpGet("session")]
 public async Task<IActionResult> GetSession()
 {
-    // The SDK automatically handles cross-domain scenarios:
-    // 1. First tries cookie-based authentication
-    // 2. Falls back to token-based authentication if cookies fail (422 errors)
-    // 3. Uses stored tokens from successful login attempts
+    // Try cookie-based session first
     var response = await _authorizerClient.GetSessionAsync();
 
     if (response.IsSuccess && response.Data != null)
     {
         return Ok(new
         {
-            isValid = response.Data.IsValid,
+            hasValidSession = true,
             user = response.Data.User,
-            expiresAt = response.Data.ExpiresAt
+            expiresIn = response.Data.ExpiresIn
         });
     }
 
-    // Enhanced error messages for cross-domain troubleshooting
+    // Enhanced error messages provide clear guidance
     var errorMessages = response.Errors?.Select(e => e.Message) ?? Array.Empty<string>();
     
-    // Check if this is a cross-domain authentication issue
-    if (errorMessages.Any(msg => msg.Contains("cross-domain") || msg.Contains("422")))
+    return BadRequest(new
     {
-        return BadRequest(new
+        error = "Session validation failed",
+        details = errorMessages,
+        suggestion = "For cross-domain scenarios, use ValidateSessionWithTokenAsync with an access token"
+    });
+}
+
+[HttpPost("session/validate-token")]
+public async Task<IActionResult> ValidateSessionWithToken([FromBody] ValidateTokenRequest request)
+{
+    // Explicit token-based session validation for cross-domain scenarios
+    var response = await _authorizerClient.ValidateSessionWithTokenAsync(request.AccessToken);
+
+    if (response.IsSuccess && response.Data != null)
+    {
+        return Ok(new
         {
-            error = "Cross-domain authentication issue",
-            message = "Session validation failed. This may be due to cross-domain cookie restrictions.",
-            suggestions = new[]
-            {
-                "Verify CORS configuration on your Authorizer instance",
-                "Check that CookieDomain is properly configured",
-                "Ensure token fallback is enabled (default)"
-            }
+            hasValidSession = true,
+            user = response.Data.User
         });
     }
 
     return BadRequest(new
     {
-        error = "Session validation failed",
-        details = errorMessages
+        error = "Token validation failed",
+        details = response.Errors?.Select(e => e.Message)
     });
 }
 ```
@@ -583,6 +587,70 @@ public async Task LoginFlow_ShouldReturnValidTokens()
         { 
             Email = signupRequest.Email 
         });
+    }
+}
+```
+
+## Simplified v1.0.4 Features
+
+### Explicit Token-Based Session Validation
+
+The v1.0.4 SDK introduces a new explicit method for token-based authentication, giving developers full control:
+
+```csharp
+// Example: Explicit token validation for cross-domain scenarios
+[HttpPost("auth/validate-token")]
+public async Task<IActionResult> ValidateToken([FromBody] ValidateTokenRequest request)
+{
+    try
+    {
+        var response = await _authorizerClient.ValidateSessionWithTokenAsync(request.AccessToken);
+        
+        if (response.IsSuccess && response.Data != null)
+        {
+            return Ok(new
+            {
+                isValid = true,
+                user = response.Data.User,
+                message = "Token validation successful"
+            });
+        }
+        
+        // Clear error messages provide actionable guidance
+        return BadRequest(new
+        {
+            isValid = false,
+            errors = response.Errors?.Select(e => e.Message),
+            suggestion = "Provide a valid access token obtained from login"
+        });
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, new { error = "Token validation failed", details = ex.Message });
+    }
+}
+
+public class ValidateTokenRequest
+{
+    public string AccessToken { get; set; } = string.Empty;
+}
+```
+
+### Enhanced Error Messages
+
+Version 1.0.4 provides clear, actionable error messages:
+
+```csharp
+// Session validation with improved error guidance
+var session = await client.GetSessionAsync();
+if (!session.IsSuccess)
+{
+    foreach (var error in session.Errors ?? Array.Empty<AuthorizerError>())
+    {
+        // v1.0.4 provides specific guidance:
+        // - "Session not found or expired. Please authenticate again."
+        // - "Session validation failed. This may be due to cross-domain cookie restrictions. Consider using token-based authentication..."
+        Console.WriteLine($"Authentication guidance: {error.Message}");
     }
 }
 ```

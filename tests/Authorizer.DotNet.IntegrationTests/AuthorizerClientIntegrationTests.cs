@@ -245,14 +245,122 @@ public class AuthorizerClientIntegrationTests : IClassFixture<TestFixture>, IAsy
     }
 
     [Fact]
-    public async Task GetSessionAsync_ShouldNotThrow()
+    public async Task GetSessionAsync_ShouldReturnValidResponse()
     {
-        // Act & Assert - Just ensure it doesn't throw
+        // Act
         var response = await _client.GetSessionAsync();
         
-        // Session may or may not succeed depending on authentication state
-        // We just verify the call completes without exception
+        // Assert - Response should be valid (either success or proper failure, but not GraphQL schema errors)
         Assert.NotNull(response);
+        
+        // If it fails, ensure it's not due to GraphQL schema issues (422 errors)
+        if (!response.IsSuccess && response.Errors != null)
+        {
+            foreach (var error in response.Errors)
+            {
+                // These would indicate GraphQL schema problems that our fixes should have resolved
+                Assert.DoesNotContain("Cannot query field \"expires_at\"", error.Message ?? "");
+                Assert.DoesNotContain("Cannot query field \"created_at\"", error.Message ?? "");
+                Assert.DoesNotContain("Cannot query field \"session_token\"", error.Message ?? "");
+                Assert.DoesNotContain("Cannot query field \"is_valid\"", error.Message ?? "");
+                Assert.DoesNotContain("Unknown argument \"session_token\"", error.Message ?? "");
+            }
+        }
+        
+        // If it succeeds, validate the structure matches our updated schema
+        if (response.IsSuccess && response.Data != null)
+        {
+            // Should have the correct field structure
+            Assert.NotNull(response.Data);
+            
+            // These properties should be available (new schema)
+            var hasValidStructure = response.Data.AccessToken != null || 
+                                  response.Data.RefreshToken != null || 
+                                  response.Data.IdToken != null ||
+                                  response.Data.ExpiresIn.HasValue ||
+                                  response.Data.User != null;
+            
+            Assert.True(hasValidStructure, "Session response should contain at least one expected field");
+        }
+    }
+
+    [Fact]
+    public async Task GraphQLSchemaCompatibility_AllEndpoints_ShouldWork()
+    {
+        // This test validates that our GraphQL schema fixes work with the current Authorizer v1.4.4
+        
+        // 1. Test session query (should not have schema errors)
+        var sessionResponse = await _client.GetSessionAsync();
+        Assert.NotNull(sessionResponse);
+        if (!sessionResponse.IsSuccess && sessionResponse.Errors != null)
+        {
+            // Verify no GraphQL schema errors
+            var hasSchemaError = sessionResponse.Errors.Any(e => 
+                (e.Message?.Contains("Cannot query field") == true) ||
+                (e.Message?.Contains("Unknown argument") == true));
+            Assert.False(hasSchemaError, $"GraphQL schema error detected: {string.Join(", ", sessionResponse.Errors.Select(e => e.Message))}");
+        }
+
+        // 2. Test login mutation (validates response structure)
+        var testEmail = $"schematest_{Guid.NewGuid():N}@example.com";
+        _createdUserEmails.Add(testEmail);
+        
+        var signupRequest = new SignupRequest
+        {
+            Email = testEmail,
+            Password = "TestPassword123!",
+            ConfirmPassword = "TestPassword123!",
+            GivenName = "Schema",
+            FamilyName = "Test"
+        };
+        
+        var signupResponse = await _client.SignupAsync(signupRequest);
+        // Signup may succeed or fail if user exists, but should not have schema errors
+        if (!signupResponse.IsSuccess && signupResponse.Errors != null)
+        {
+            var hasSchemaError = signupResponse.Errors.Any(e => 
+                (e.Message?.Contains("Cannot query field") == true) ||
+                (e.Message?.Contains("Unknown argument") == true));
+            Assert.False(hasSchemaError, $"Signup GraphQL schema error: {string.Join(", ", signupResponse.Errors.Select(e => e.Message))}");
+        }
+
+        var loginRequest = new LoginRequest
+        {
+            Email = testEmail,
+            Password = "TestPassword123!"
+        };
+
+        var loginResponse = await _client.LoginAsync(loginRequest);
+        if (loginResponse.IsSuccess && loginResponse.Data != null)
+        {
+            // Validate the response structure matches our updated models
+            Assert.NotNull(loginResponse.Data);
+            
+            // Should have expires_in (not expires_at)
+            if (loginResponse.Data.ExpiresIn.HasValue)
+            {
+                Assert.True(loginResponse.Data.ExpiresIn > 0, "ExpiresIn should be positive");
+            }
+            
+            // Should have proper token fields
+            var hasTokens = !string.IsNullOrEmpty(loginResponse.Data.AccessToken) ||
+                           !string.IsNullOrEmpty(loginResponse.Data.RefreshToken) ||
+                           !string.IsNullOrEmpty(loginResponse.Data.IdToken);
+            Assert.True(hasTokens, "Login response should contain at least one token");
+        }
+        else if (!loginResponse.IsSuccess && loginResponse.Errors != null)
+        {
+            // Verify no GraphQL schema errors
+            var hasSchemaError = loginResponse.Errors.Any(e => 
+                (e.Message?.Contains("Cannot query field") == true) ||
+                (e.Message?.Contains("Unknown argument") == true));
+            Assert.False(hasSchemaError, $"Login GraphQL schema error: {string.Join(", ", loginResponse.Errors.Select(e => e.Message))}");
+        }
+
+        // 3. Test meta query (should always work)
+        var metaResponse = await _client.GetMetaAsync();
+        Assert.True(metaResponse.IsSuccess, $"Meta query failed: {string.Join(", ", metaResponse.Errors?.Select(e => e.Message) ?? [])}");
+        Assert.NotNull(metaResponse.Data);
     }
 
     [Fact]
@@ -290,7 +398,7 @@ public class AuthorizerClientIntegrationTests : IClassFixture<TestFixture>, IAsy
         var authorizeRequest = new AuthorizeRequest
         {
             ResponseType = "code",
-            ClientId = Environment.GetEnvironmentVariable("AUTHORIZER_CLIENT_ID") ?? "6611ec1c-bd25-4b42-a524-3d4abc29bb41",
+            ClientId = Environment.GetEnvironmentVariable("AUTHORIZER_CLIENT_ID") ?? "sample-client-id",
             RedirectUri = "http://localhost:8080/auth/callback",
             Scope = "openid email profile",
             State = Guid.NewGuid().ToString()
@@ -387,7 +495,7 @@ public class AuthorizerClientIntegrationTests : IClassFixture<TestFixture>, IAsy
         var authorizeRequest = new AuthorizeRequest
         {
             ResponseType = "code",
-            ClientId = Environment.GetEnvironmentVariable("AUTHORIZER_CLIENT_ID") ?? "6611ec1c-bd25-4b42-a524-3d4abc29bb41",
+            ClientId = Environment.GetEnvironmentVariable("AUTHORIZER_CLIENT_ID") ?? "sample-client-id",
             RedirectUri = callbackServer.CallbackUrl,
             Scope = "openid email profile",
             State = state

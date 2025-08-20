@@ -383,6 +383,11 @@ FodyWeavers.xsd
 # Claude
 .claude/
 
+# Credential files - prevent real credentials from being committed
+appsettings.personal.json
+**/appsettings.credentials.json
+**/*credentials*.json
+
 # macOS
 .DS_Store
 .AppleDouble

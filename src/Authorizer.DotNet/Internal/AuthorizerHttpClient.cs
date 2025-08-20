@@ -71,24 +71,6 @@ public class AuthorizerHttpClient
             _httpClient.DefaultRequestHeaders.Add("Access-Control-Allow-Credentials", "true");
         }
 
-        // Set Origin header if enabled and RedirectUrl is available
-        if (_options.SetOriginHeader && !string.IsNullOrEmpty(_options.RedirectUrl))
-        {
-            try
-            {
-                var redirectUri = new Uri(_options.RedirectUrl);
-                var origin = $"{redirectUri.Scheme}://{redirectUri.Host}";
-                if (!redirectUri.IsDefaultPort)
-                {
-                    origin += $":{redirectUri.Port}";
-                }
-                _httpClient.DefaultRequestHeaders.Add("Origin", origin);
-            }
-            catch (UriFormatException ex)
-            {
-                _logger.LogWarning(ex, "Could not parse RedirectUrl to set Origin header: {RedirectUrl}", _options.RedirectUrl);
-            }
-        }
 
         foreach (var header in _options.ExtraHeaders)
         {

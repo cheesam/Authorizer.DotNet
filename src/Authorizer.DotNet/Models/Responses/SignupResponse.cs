@@ -57,12 +57,6 @@ public class SignupResponse
     public string? State { get; set; }
 
     /// <summary>
-    /// Timestamp when the tokens were issued.
-    /// </summary>
-    [JsonPropertyName("created_at")]
-    public long? CreatedAt { get; set; }
-
-    /// <summary>
     /// Message about email verification if required.
     /// </summary>
     [JsonPropertyName("message")]
@@ -73,10 +67,4 @@ public class SignupResponse
     /// </summary>
     [JsonPropertyName("should_show_email_otp_screen")]
     public bool? ShouldShowEmailOtpScreen { get; set; }
-
-    /// <summary>
-    /// Session token for cookie-based authentication.
-    /// </summary>
-    [JsonPropertyName("session_token")]
-    public string? SessionToken { get; set; }
 }

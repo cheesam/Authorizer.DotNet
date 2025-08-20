@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.4] - 2025-08-19
+
+### Fixed
+- **GraphQL Schema Compatibility**
+  - Updated GraphQL queries to use current Authorizer API v1.4.4+ field names
+  - Changed `expires_at` → `expires_in` in session and authentication responses
+  - Removed deprecated `created_at` field from TokenResponse, LoginResponse, and SignupResponse
+  - Removed deprecated `session_token` field from LoginResponse and SignupResponse  
+  - Removed deprecated `is_valid` field from SessionInfo model
+  - Fixed session query to remove invalid `session_token` parameter
+
+- **Authentication Reliability**
+  - Resolved HTTP 422 "Cannot query field" errors when using current Authorizer instances
+  - Fixed "Unknown argument 'session_token'" errors in session queries
+  - Eliminated GraphQL validation failures due to outdated field references
+
+### Enhanced
+- **API Compatibility**
+  - Full compatibility with Authorizer v1.4.4 and later versions
+  - Updated SessionInfo model to match current GraphQL schema structure
+  - Improved response model accuracy for authentication operations
+
+### Developer Experience
+- **Error Handling**
+  - Clearer error messages when authentication fails
+  - Better debugging information for GraphQL schema mismatches
+  - Enhanced integration test coverage for schema validation
+
+### Documentation
+- Updated API documentation to reflect current field names and structures
+- Added troubleshooting guide for GraphQL schema compatibility
+- Enhanced configuration examples for cross-domain cookie security
+
+### Compatibility
+- **Breaking Change**: Removed deprecated model properties (`IsValid`, `CreatedAt`, `SessionToken`)
+- Updated sample applications to use correct property references
+- Integration tests now validate against current Authorizer API schema
+
 ## [1.0.3] - 2025-08-18
 
 ### Added

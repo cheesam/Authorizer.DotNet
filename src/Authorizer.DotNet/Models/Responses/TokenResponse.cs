@@ -49,9 +49,4 @@ public class TokenResponse
     [JsonPropertyName("state")]
     public string? State { get; set; }
 
-    /// <summary>
-    /// Timestamp when the tokens were issued.
-    /// </summary>
-    [JsonPropertyName("created_at")]
-    public long? CreatedAt { get; set; }
 }

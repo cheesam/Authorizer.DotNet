@@ -33,26 +33,8 @@ public class SessionInfo
     public User? User { get; set; }
 
     /// <summary>
-    /// Session expiration timestamp.
+    /// Token expiration time in seconds.
     /// </summary>
-    [JsonPropertyName("expires_at")]
-    public long? ExpiresAt { get; set; }
-
-    /// <summary>
-    /// When the session was created.
-    /// </summary>
-    [JsonPropertyName("created_at")]
-    public long? CreatedAt { get; set; }
-
-    /// <summary>
-    /// Session token for cookie-based authentication.
-    /// </summary>
-    [JsonPropertyName("session_token")]
-    public string? SessionToken { get; set; }
-
-    /// <summary>
-    /// Whether the session is still valid.
-    /// </summary>
-    [JsonPropertyName("is_valid")]
-    public bool IsValid { get; set; }
+    [JsonPropertyName("expires_in")]
+    public long? ExpiresIn { get; set; }
 }

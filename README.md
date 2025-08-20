@@ -18,7 +18,7 @@ Official .NET SDK for [Authorizer.dev](https://authorizer.dev) - a powerful auth
 - 🔧 **Dependency Injection**: Native .NET DI container support
 - 📊 **Structured Logging**: Built-in logging with configurable levels
 - ⚡ **High Performance**: Optimized HTTP client with connection pooling
-- 🌍 **Cross-Domain Support**: Automatic fallback for cross-subdomain authentication
+- 🌍 **Cross-Domain Support**: Clear error messages and explicit token-based validation
 - 🧪 **Production Ready**: Comprehensive error handling and resilience
 
 ## Installation
@@ -279,17 +279,15 @@ services.AddAuthorizer(options =>
     // Cross-domain configuration
     options.UseCookies = true;                    // Enable cookie handling
     options.UseCredentials = true;                // Include credentials in CORS
-    options.SetOriginHeader = true;               // Auto-set Origin header
     options.CookieDomain = ".example.com";        // Cross-domain cookie sharing
-    options.EnableTokenFallback = true;           // Token fallback (default: true)
 });
 ```
 
-The SDK automatically handles cross-domain authentication by:
-1. Attempting cookie-based authentication first
-2. Falling back to token-based authentication if cookies fail (422 errors)
-3. Storing tokens in memory for seamless operation
-4. Providing enhanced error messages for troubleshooting
+The simplified SDK approach provides:
+1. Clear, actionable error messages for authentication issues
+2. Explicit token-based session validation via `ValidateSessionWithTokenAsync`
+3. Developer control over authentication flow
+4. Transparent error handling without hidden automatic retries
 
 ### Configuration from appsettings.json
 
@@ -305,8 +303,6 @@ The SDK automatically handles cross-domain authentication by:
     "CookieDomain": ".your-domain.com",
     "UseCookies": true,
     "UseCredentials": true,
-    "SetOriginHeader": true,
-    "EnableTokenFallback": true,
     "ExtraHeaders": {
       "X-Custom-Header": "custom-value"
     }
@@ -367,7 +363,14 @@ Retrieves the current user's profile information.
 Task<AuthorizerResponse<SessionInfo>> GetSessionAsync(string? sessionToken = null, CancellationToken cancellationToken = default)
 ```
 
-Retrieves current session information.
+Retrieves current session information using cookies.
+
+#### ValidateSessionWithTokenAsync
+```csharp
+Task<AuthorizerResponse<SessionInfo>> ValidateSessionWithTokenAsync(string accessToken, CancellationToken cancellationToken = default)
+```
+
+Validates a session using a provided access token instead of cookies. Useful for cross-domain scenarios or when you prefer explicit token-based authentication.
 
 ### Password Management
 
@@ -950,7 +953,7 @@ var response = await authorizerClient.LoginAsync(new LoginRequest
 
 4. **"HTTP 422 Unprocessable Entity" (Cross-Domain Issues)**
    - Common in scenarios where auth server and app are on different subdomains
-   - Enable token fallback: `options.EnableTokenFallback = true` (default)
+   - Use explicit token validation: `await client.ValidateSessionWithTokenAsync(token)`
    - Configure cross-domain cookies: `options.CookieDomain = ".yourdomain.com"`
    - Enable CORS credentials: `options.UseCredentials = true`
    - Check browser console for CORS errors
@@ -966,8 +969,8 @@ var response = await authorizerClient.LoginAsync(new LoginRequest
 7. **Cross-Domain Authentication Not Working**
    - Ensure `CookieDomain` starts with a dot (e.g., `.example.com`)
    - Verify CORS is configured on your Authorizer instance
-   - Check that `UseCredentials`, `UseCookies`, and `SetOriginHeader` are enabled
-   - Look for "Token-based fallback succeeded" in debug logs
+   - Use explicit token validation: `ValidateSessionWithTokenAsync(accessToken)`
+   - Check error messages for actionable troubleshooting guidance
 
 ### Enable Debug Logging
 

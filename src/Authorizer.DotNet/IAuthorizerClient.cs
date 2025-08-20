@@ -100,6 +100,15 @@ public interface IAuthorizerClient
     /// <returns>User profile information if token is valid.</returns>
     Task<AuthorizerResponse<UserProfile>> ValidateJwtAsync(string token, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Validates a session using a provided access token instead of cookies.
+    /// This method is useful for cross-domain scenarios or when you prefer token-based authentication.
+    /// </summary>
+    /// <param name="accessToken">The access token to validate</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>A response containing session information if the token is valid</returns>
+    Task<AuthorizerResponse<SessionInfo>> ValidateSessionWithTokenAsync(string accessToken, CancellationToken cancellationToken = default);
+
     #endregion
 
     #region Password Management

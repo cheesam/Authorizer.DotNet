@@ -63,8 +63,6 @@ public static class ServiceCollectionExtensions
             opts.DisableBrowserHistory = options.DisableBrowserHistory;
             opts.UseCookies = options.UseCookies;
             opts.UseCredentials = options.UseCredentials;
-            opts.SetOriginHeader = options.SetOriginHeader;
-            opts.EnableTokenFallback = options.EnableTokenFallback;
         });
 
         return AddAuthorizerCore(services);

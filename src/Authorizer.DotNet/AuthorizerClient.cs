@@ -107,8 +107,8 @@ public class AuthorizerClient : IAuthorizerClient
         {
             _logger.LogInformation("User login successful for email: {Email}", request.Email);
             
-            // Store tokens for fallback authentication if enabled
-            if (_options.EnableTokenFallback && response.Data != null)
+            // Store tokens for potential future use
+            if (response.Data != null)
             {
                 try
                 {
@@ -123,7 +123,7 @@ public class AuthorizerClient : IAuthorizerClient
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to store tokens for fallback authentication");
+                    _logger.LogWarning(ex, "Failed to store tokens");
                 }
             }
         }
@@ -356,15 +356,12 @@ public class AuthorizerClient : IAuthorizerClient
         _logger.LogDebug("Retrieving session information");
 
         const string query = @"
-            query session($session_token: String) {
-                session(session_token: $session_token) {
+            query session {
+                session {
                     access_token
                     refresh_token
                     id_token
-                    expires_at
-                    created_at
-                    session_token
-                    is_valid
+                    expires_in
                     user {
                         id
                         email
@@ -388,68 +385,89 @@ public class AuthorizerClient : IAuthorizerClient
                 }
             }";
 
-        var variables = new { session_token = sessionToken };
-
-        // First try cookie-based session
-        var response = await _httpClient.PostGraphQLAsync<SessionInfo>(query, variables, cancellationToken);
+        var response = await _httpClient.PostGraphQLAsync<SessionInfo>(query, null, cancellationToken);
         
-        // If cookie-based session fails with 422 (common cross-domain issue), try token-based fallback
-        if (!response.IsSuccess && _options.EnableTokenFallback && 
-            response.Errors?.Any(e => e.Message?.Contains("422") == true || e.Message?.Contains("Unprocessable") == true) == true)
+        // Enhance error messages for common issues
+        if (!response.IsSuccess && response.Errors != null)
         {
-            _logger.LogDebug("Cookie-based session failed, attempting token-based fallback");
-            
-            try
+            foreach (var error in response.Errors)
             {
-                var accessToken = await _tokenStorage.GetAccessTokenAsync(cancellationToken);
-                if (!string.IsNullOrEmpty(accessToken))
+                // Provide clear, actionable error messages
+                if (error.Message?.Contains("401") == true || error.Message?.Contains("Unauthorized") == true)
                 {
-                    // Try to get profile using stored access token as fallback
-                    var profileResponse = await GetProfileAsync(accessToken, cancellationToken);
-                    if (profileResponse.IsSuccess && profileResponse.Data != null)
-                    {
-                        _logger.LogInformation("Token-based fallback succeeded");
-                        
-                        // Create a synthetic SessionInfo from profile data
-                        var sessionInfo = new SessionInfo
-                        {
-                            AccessToken = accessToken,
-                            RefreshToken = await _tokenStorage.GetRefreshTokenAsync(cancellationToken),
-                            IsValid = true,
-                            User = new Models.Common.User
-                            {
-                                Id = profileResponse.Data.Id,
-                                Email = profileResponse.Data.Email,
-                                EmailVerified = profileResponse.Data.EmailVerified,
-                                GivenName = profileResponse.Data.GivenName,
-                                FamilyName = profileResponse.Data.FamilyName,
-                                MiddleName = profileResponse.Data.MiddleName,
-                                Nickname = profileResponse.Data.Nickname,
-                                Picture = profileResponse.Data.Picture,
-                                Gender = profileResponse.Data.Gender,
-                                Birthdate = profileResponse.Data.Birthdate,
-                                PhoneNumber = profileResponse.Data.PhoneNumber,
-                                PhoneNumberVerified = profileResponse.Data.PhoneNumberVerified,
-                                CreatedAt = profileResponse.Data.CreatedAt,
-                                UpdatedAt = profileResponse.Data.UpdatedAt,
-                                Roles = profileResponse.Data.Roles,
-                                IsMultiFactorAuthEnabled = profileResponse.Data.IsMultiFactorAuthEnabled,
-                                RevokedTimestamp = profileResponse.Data.RevokedTimestamp,
-                                SignupMethods = profileResponse.Data.SignupMethods
-                            }
-                        };
-                        
-                        return AuthorizerResponse<SessionInfo>.Success(sessionInfo);
-                    }
+                    error.Message = "Session not found or expired. Please authenticate again.";
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Token-based fallback failed");
+                else if (error.Message?.Contains("422") == true)
+                {
+                    error.Message = "Session validation failed. This may be due to cross-domain cookie restrictions. Consider using token-based authentication or configuring cookies properly.";
+                }
+                else if (error.Message?.Contains("403") == true || error.Message?.Contains("Forbidden") == true)
+                {
+                    error.Message = "Access denied. Session may be invalid or permissions insufficient.";
+                }
             }
         }
 
         return response;
+    }
+
+    /// <summary>
+    /// Validates a session using a provided access token instead of cookies.
+    /// This method is useful for cross-domain scenarios or when you prefer token-based authentication.
+    /// </summary>
+    /// <param name="accessToken">The access token to validate</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>A response containing session information if the token is valid</returns>
+    public async Task<AuthorizerResponse<SessionInfo>> ValidateSessionWithTokenAsync(
+        string accessToken,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrEmpty(accessToken))
+        {
+            return AuthorizerResponse<SessionInfo>.Failure(
+                new[] { new AuthorizerError { Message = "Access token is required for token-based session validation." } });
+        }
+
+        _logger.LogDebug("Validating session using access token");
+
+        // Get user profile using the token
+        var profileResponse = await GetProfileAsync(accessToken, cancellationToken);
+        
+        if (!profileResponse.IsSuccess || profileResponse.Data == null)
+        {
+            return AuthorizerResponse<SessionInfo>.Failure(
+                profileResponse.Errors ?? new[] { new AuthorizerError { Message = "Invalid access token or session expired." } });
+        }
+
+        // Create SessionInfo from profile data
+        var sessionInfo = new SessionInfo
+        {
+            AccessToken = accessToken,
+            User = new Models.Common.User
+            {
+                Id = profileResponse.Data.Id,
+                Email = profileResponse.Data.Email,
+                EmailVerified = profileResponse.Data.EmailVerified,
+                GivenName = profileResponse.Data.GivenName,
+                FamilyName = profileResponse.Data.FamilyName,
+                MiddleName = profileResponse.Data.MiddleName,
+                Nickname = profileResponse.Data.Nickname,
+                Picture = profileResponse.Data.Picture,
+                Gender = profileResponse.Data.Gender,
+                Birthdate = profileResponse.Data.Birthdate,
+                PhoneNumber = profileResponse.Data.PhoneNumber,
+                PhoneNumberVerified = profileResponse.Data.PhoneNumberVerified,
+                CreatedAt = profileResponse.Data.CreatedAt,
+                UpdatedAt = profileResponse.Data.UpdatedAt,
+                Roles = profileResponse.Data.Roles,
+                IsMultiFactorAuthEnabled = profileResponse.Data.IsMultiFactorAuthEnabled,
+                RevokedTimestamp = profileResponse.Data.RevokedTimestamp,
+                SignupMethods = profileResponse.Data.SignupMethods
+            }
+        };
+
+        _logger.LogDebug("Token-based session validation successful for user: {Email}", profileResponse.Data.Email);
+        return AuthorizerResponse<SessionInfo>.Success(sessionInfo);
     }
 
     /// <inheritdoc />
@@ -471,16 +489,13 @@ public class AuthorizerClient : IAuthorizerClient
         if (response.IsSuccess)
         {
             // Clear stored tokens on successful logout
-            if (_options.EnableTokenFallback)
+            try
             {
-                try
-                {
-                    await _tokenStorage.ClearTokensAsync(cancellationToken);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to clear stored tokens during logout");
-                }
+                await _tokenStorage.ClearTokensAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to clear stored tokens during logout");
             }
             
             return AuthorizerResponse<bool>.Success(true);

@@ -57,12 +57,6 @@ public class LoginResponse
     public string? State { get; set; }
 
     /// <summary>
-    /// Timestamp when the tokens were issued.
-    /// </summary>
-    [JsonPropertyName("created_at")]
-    public long? CreatedAt { get; set; }
-
-    /// <summary>
     /// Whether the login should be remembered (for persistent sessions).
     /// </summary>
     [JsonPropertyName("should_show_email_otp_screen")]
@@ -73,10 +67,4 @@ public class LoginResponse
     /// </summary>
     [JsonPropertyName("should_show_mobile_otp_screen")]
     public bool? ShouldShowMobileOtpScreen { get; set; }
-
-    /// <summary>
-    /// Session token for cookie-based authentication.
-    /// </summary>
-    [JsonPropertyName("session_token")]
-    public string? SessionToken { get; set; }
 }
